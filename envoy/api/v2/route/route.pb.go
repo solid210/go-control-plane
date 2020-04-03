@@ -31,9 +31,14 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 type VirtualHost_TlsRequirementType int32
 
 const (
-	VirtualHost_NONE          VirtualHost_TlsRequirementType = 0
+	// No TLS requirement for the virtual host.
+	VirtualHost_NONE VirtualHost_TlsRequirementType = 0
+	// External requests must use TLS. If a request is external and it is not
+	// using TLS, a 301 redirect will be sent telling the client to use HTTPS.
 	VirtualHost_EXTERNAL_ONLY VirtualHost_TlsRequirementType = 1
-	VirtualHost_ALL           VirtualHost_TlsRequirementType = 2
+	// All requests must use TLS. If a request is not using TLS, a 301 redirect
+	// will be sent telling the client to use HTTPS.
+	VirtualHost_ALL VirtualHost_TlsRequirementType = 2
 )
 
 var VirtualHost_TlsRequirementType_name = map[int32]string{
@@ -59,8 +64,10 @@ func (VirtualHost_TlsRequirementType) EnumDescriptor() ([]byte, []int) {
 type RouteAction_ClusterNotFoundResponseCode int32
 
 const (
+	// HTTP status code - 503 Service Unavailable.
 	RouteAction_SERVICE_UNAVAILABLE RouteAction_ClusterNotFoundResponseCode = 0
-	RouteAction_NOT_FOUND           RouteAction_ClusterNotFoundResponseCode = 1
+	// HTTP status code - 404 Not Found.
+	RouteAction_NOT_FOUND RouteAction_ClusterNotFoundResponseCode = 1
 )
 
 var RouteAction_ClusterNotFoundResponseCode_name = map[int32]string{
@@ -78,9 +85,10 @@ func (x RouteAction_ClusterNotFoundResponseCode) String() string {
 }
 
 func (RouteAction_ClusterNotFoundResponseCode) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{5, 0}
+	return fileDescriptor_7dc2895fb75d9d41, []int{6, 0}
 }
 
+// Configures :ref:`internal redirect <arch_overview_internal_redirects>` behavior.
 type RouteAction_InternalRedirectAction int32
 
 const (
@@ -103,16 +111,21 @@ func (x RouteAction_InternalRedirectAction) String() string {
 }
 
 func (RouteAction_InternalRedirectAction) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{5, 1}
+	return fileDescriptor_7dc2895fb75d9d41, []int{6, 1}
 }
 
 type RedirectAction_RedirectResponseCode int32
 
 const (
-	RedirectAction_MOVED_PERMANENTLY  RedirectAction_RedirectResponseCode = 0
-	RedirectAction_FOUND              RedirectAction_RedirectResponseCode = 1
-	RedirectAction_SEE_OTHER          RedirectAction_RedirectResponseCode = 2
+	// Moved Permanently HTTP Status Code - 301.
+	RedirectAction_MOVED_PERMANENTLY RedirectAction_RedirectResponseCode = 0
+	// Found HTTP Status Code - 302.
+	RedirectAction_FOUND RedirectAction_RedirectResponseCode = 1
+	// See Other HTTP Status Code - 303.
+	RedirectAction_SEE_OTHER RedirectAction_RedirectResponseCode = 2
+	// Temporary Redirect HTTP Status Code - 307.
 	RedirectAction_TEMPORARY_REDIRECT RedirectAction_RedirectResponseCode = 3
+	// Permanent Redirect HTTP Status Code - 308.
 	RedirectAction_PERMANENT_REDIRECT RedirectAction_RedirectResponseCode = 4
 )
 
@@ -137,30 +150,106 @@ func (x RedirectAction_RedirectResponseCode) String() string {
 }
 
 func (RedirectAction_RedirectResponseCode) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{8, 0}
+	return fileDescriptor_7dc2895fb75d9d41, []int{9, 0}
 }
 
+// The top level element in the routing configuration is a virtual host. Each virtual host has
+// a logical name as well as a set of domains that get routed to it based on the incoming request's
+// host header. This allows a single listener to service multiple top level domain path trees. Once
+// a virtual host is selected based on the domain, the routes are processed in order to see which
+// upstream cluster to route to or whether to perform a redirect.
+// [#next-free-field: 19]
 type VirtualHost struct {
-	Name                       string                         `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Domains                    []string                       `protobuf:"bytes,2,rep,name=domains,proto3" json:"domains,omitempty"`
-	Routes                     []*Route                       `protobuf:"bytes,3,rep,name=routes,proto3" json:"routes,omitempty"`
-	RequireTls                 VirtualHost_TlsRequirementType `protobuf:"varint,4,opt,name=require_tls,json=requireTls,proto3,enum=envoy.api.v2.route.VirtualHost_TlsRequirementType" json:"require_tls,omitempty"`
-	VirtualClusters            []*VirtualCluster              `protobuf:"bytes,5,rep,name=virtual_clusters,json=virtualClusters,proto3" json:"virtual_clusters,omitempty"`
-	RateLimits                 []*RateLimit                   `protobuf:"bytes,6,rep,name=rate_limits,json=rateLimits,proto3" json:"rate_limits,omitempty"`
-	RequestHeadersToAdd        []*core.HeaderValueOption      `protobuf:"bytes,7,rep,name=request_headers_to_add,json=requestHeadersToAdd,proto3" json:"request_headers_to_add,omitempty"`
-	RequestHeadersToRemove     []string                       `protobuf:"bytes,13,rep,name=request_headers_to_remove,json=requestHeadersToRemove,proto3" json:"request_headers_to_remove,omitempty"`
-	ResponseHeadersToAdd       []*core.HeaderValueOption      `protobuf:"bytes,10,rep,name=response_headers_to_add,json=responseHeadersToAdd,proto3" json:"response_headers_to_add,omitempty"`
-	ResponseHeadersToRemove    []string                       `protobuf:"bytes,11,rep,name=response_headers_to_remove,json=responseHeadersToRemove,proto3" json:"response_headers_to_remove,omitempty"`
-	Cors                       *CorsPolicy                    `protobuf:"bytes,8,opt,name=cors,proto3" json:"cors,omitempty"`
-	PerFilterConfig            map[string]*_struct.Struct     `protobuf:"bytes,12,rep,name=per_filter_config,json=perFilterConfig,proto3" json:"per_filter_config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // Deprecated: Do not use.
-	TypedPerFilterConfig       map[string]*any.Any            `protobuf:"bytes,15,rep,name=typed_per_filter_config,json=typedPerFilterConfig,proto3" json:"typed_per_filter_config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	IncludeRequestAttemptCount bool                           `protobuf:"varint,14,opt,name=include_request_attempt_count,json=includeRequestAttemptCount,proto3" json:"include_request_attempt_count,omitempty"`
-	RetryPolicy                *RetryPolicy                   `protobuf:"bytes,16,opt,name=retry_policy,json=retryPolicy,proto3" json:"retry_policy,omitempty"`
-	HedgePolicy                *HedgePolicy                   `protobuf:"bytes,17,opt,name=hedge_policy,json=hedgePolicy,proto3" json:"hedge_policy,omitempty"`
-	PerRequestBufferLimitBytes *wrappers.UInt32Value          `protobuf:"bytes,18,opt,name=per_request_buffer_limit_bytes,json=perRequestBufferLimitBytes,proto3" json:"per_request_buffer_limit_bytes,omitempty"`
-	XXX_NoUnkeyedLiteral       struct{}                       `json:"-"`
-	XXX_unrecognized           []byte                         `json:"-"`
-	XXX_sizecache              int32                          `json:"-"`
+	// The logical name of the virtual host. This is used when emitting certain
+	// statistics but is not relevant for routing.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// A list of domains (host/authority header) that will be matched to this
+	// virtual host. Wildcard hosts are supported in the suffix or prefix form.
+	//
+	// Domain search order:
+	//  1. Exact domain names: ``www.foo.com``.
+	//  2. Suffix domain wildcards: ``*.foo.com`` or ``*-bar.foo.com``.
+	//  3. Prefix domain wildcards: ``foo.*`` or ``foo-*``.
+	//  4. Special wildcard ``*`` matching any domain.
+	//
+	// .. note::
+	//
+	//   The wildcard will not match the empty string.
+	//   e.g. ``*-bar.foo.com`` will match ``baz-bar.foo.com`` but not ``-bar.foo.com``.
+	//   The longest wildcards match first.
+	//   Only a single virtual host in the entire route configuration can match on ``*``. A domain
+	//   must be unique across all virtual hosts or the config will fail to load.
+	Domains []string `protobuf:"bytes,2,rep,name=domains,proto3" json:"domains,omitempty"`
+	// The list of routes that will be matched, in order, for incoming requests.
+	// The first route that matches will be used.
+	Routes []*Route `protobuf:"bytes,3,rep,name=routes,proto3" json:"routes,omitempty"`
+	// Specifies the type of TLS enforcement the virtual host expects. If this option is not
+	// specified, there is no TLS requirement for the virtual host.
+	RequireTls VirtualHost_TlsRequirementType `protobuf:"varint,4,opt,name=require_tls,json=requireTls,proto3,enum=envoy.api.v2.route.VirtualHost_TlsRequirementType" json:"require_tls,omitempty"`
+	// A list of virtual clusters defined for this virtual host. Virtual clusters
+	// are used for additional statistics gathering.
+	VirtualClusters []*VirtualCluster `protobuf:"bytes,5,rep,name=virtual_clusters,json=virtualClusters,proto3" json:"virtual_clusters,omitempty"`
+	// Specifies a set of rate limit configurations that will be applied to the
+	// virtual host.
+	RateLimits []*RateLimit `protobuf:"bytes,6,rep,name=rate_limits,json=rateLimits,proto3" json:"rate_limits,omitempty"`
+	// Specifies a list of HTTP headers that should be added to each request
+	// handled by this virtual host. Headers specified at this level are applied
+	// after headers from enclosed :ref:`envoy_api_msg_route.Route` and before headers from the
+	// enclosing :ref:`envoy_api_msg_RouteConfiguration`. For more information, including
+	// details on header value syntax, see the documentation on :ref:`custom request headers
+	// <config_http_conn_man_headers_custom_request_headers>`.
+	RequestHeadersToAdd []*core.HeaderValueOption `protobuf:"bytes,7,rep,name=request_headers_to_add,json=requestHeadersToAdd,proto3" json:"request_headers_to_add,omitempty"`
+	// Specifies a list of HTTP headers that should be removed from each request
+	// handled by this virtual host.
+	RequestHeadersToRemove []string `protobuf:"bytes,13,rep,name=request_headers_to_remove,json=requestHeadersToRemove,proto3" json:"request_headers_to_remove,omitempty"`
+	// Specifies a list of HTTP headers that should be added to each response
+	// handled by this virtual host. Headers specified at this level are applied
+	// after headers from enclosed :ref:`envoy_api_msg_route.Route` and before headers from the
+	// enclosing :ref:`envoy_api_msg_RouteConfiguration`. For more information, including
+	// details on header value syntax, see the documentation on :ref:`custom request headers
+	// <config_http_conn_man_headers_custom_request_headers>`.
+	ResponseHeadersToAdd []*core.HeaderValueOption `protobuf:"bytes,10,rep,name=response_headers_to_add,json=responseHeadersToAdd,proto3" json:"response_headers_to_add,omitempty"`
+	// Specifies a list of HTTP headers that should be removed from each response
+	// handled by this virtual host.
+	ResponseHeadersToRemove []string `protobuf:"bytes,11,rep,name=response_headers_to_remove,json=responseHeadersToRemove,proto3" json:"response_headers_to_remove,omitempty"`
+	// Indicates that the virtual host has a CORS policy.
+	Cors *CorsPolicy `protobuf:"bytes,8,opt,name=cors,proto3" json:"cors,omitempty"`
+	// The per_filter_config field can be used to provide virtual host-specific
+	// configurations for filters. The key should match the filter name, such as
+	// *envoy.buffer* for the HTTP buffer filter. Use of this field is filter
+	// specific; see the :ref:`HTTP filter documentation <config_http_filters>`
+	// for if and how it is utilized.
+	PerFilterConfig map[string]*_struct.Struct `protobuf:"bytes,12,rep,name=per_filter_config,json=perFilterConfig,proto3" json:"per_filter_config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // Deprecated: Do not use.
+	// The per_filter_config field can be used to provide virtual host-specific
+	// configurations for filters. The key should match the filter name, such as
+	// *envoy.buffer* for the HTTP buffer filter. Use of this field is filter
+	// specific; see the :ref:`HTTP filter documentation <config_http_filters>`
+	// for if and how it is utilized.
+	TypedPerFilterConfig map[string]*any.Any `protobuf:"bytes,15,rep,name=typed_per_filter_config,json=typedPerFilterConfig,proto3" json:"typed_per_filter_config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// Decides whether the :ref:`x-envoy-attempt-count
+	// <config_http_filters_router_x-envoy-attempt-count>` header should be included
+	// in the upstream request. Setting this option will cause it to override any existing header
+	// value, so in the case of two Envoys on the request path with this option enabled, the upstream
+	// will see the attempt count as perceived by the second Envoy. Defaults to false.
+	// This header is unaffected by the
+	// :ref:`suppress_envoy_headers
+	// <envoy_api_field_config.filter.http.router.v2.Router.suppress_envoy_headers>` flag.
+	IncludeRequestAttemptCount bool `protobuf:"varint,14,opt,name=include_request_attempt_count,json=includeRequestAttemptCount,proto3" json:"include_request_attempt_count,omitempty"`
+	// Indicates the retry policy for all routes in this virtual host. Note that setting a
+	// route level entry will take precedence over this config and it'll be treated
+	// independently (e.g.: values are not inherited).
+	RetryPolicy *RetryPolicy `protobuf:"bytes,16,opt,name=retry_policy,json=retryPolicy,proto3" json:"retry_policy,omitempty"`
+	// Indicates the hedge policy for all routes in this virtual host. Note that setting a
+	// route level entry will take precedence over this config and it'll be treated
+	// independently (e.g.: values are not inherited).
+	HedgePolicy *HedgePolicy `protobuf:"bytes,17,opt,name=hedge_policy,json=hedgePolicy,proto3" json:"hedge_policy,omitempty"`
+	// The maximum bytes which will be buffered for retries and shadowing.
+	// If set and a route-specific limit is not set, the bytes actually buffered will be the minimum
+	// value of this and the listener per_connection_buffer_limit_bytes.
+	PerRequestBufferLimitBytes *wrappers.UInt32Value `protobuf:"bytes,18,opt,name=per_request_buffer_limit_bytes,json=perRequestBufferLimitBytes,proto3" json:"per_request_buffer_limit_bytes,omitempty"`
+	XXX_NoUnkeyedLiteral       struct{}              `json:"-"`
+	XXX_unrecognized           []byte                `json:"-"`
+	XXX_sizecache              int32                 `json:"-"`
 }
 
 func (m *VirtualHost) Reset()         { *m = VirtualHost{} }
@@ -308,27 +397,75 @@ func (m *VirtualHost) GetPerRequestBufferLimitBytes() *wrappers.UInt32Value {
 	return nil
 }
 
+// A route is both a specification of how to match a request as well as an indication of what to do
+// next (e.g., redirect, forward, rewrite, etc.).
+//
+// .. attention::
+//
+//   Envoy supports routing on HTTP method via :ref:`header matching
+//   <envoy_api_msg_route.HeaderMatcher>`.
+// [#next-free-field: 17]
 type Route struct {
-	Name  string      `protobuf:"bytes,14,opt,name=name,proto3" json:"name,omitempty"`
+	// Name for the route.
+	Name string `protobuf:"bytes,14,opt,name=name,proto3" json:"name,omitempty"`
+	// Route matching parameters.
 	Match *RouteMatch `protobuf:"bytes,1,opt,name=match,proto3" json:"match,omitempty"`
 	// Types that are valid to be assigned to Action:
 	//	*Route_Route
 	//	*Route_Redirect
 	//	*Route_DirectResponse
-	Action                     isRoute_Action             `protobuf_oneof:"action"`
-	Metadata                   *core.Metadata             `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Decorator                  *Decorator                 `protobuf:"bytes,5,opt,name=decorator,proto3" json:"decorator,omitempty"`
-	PerFilterConfig            map[string]*_struct.Struct `protobuf:"bytes,8,rep,name=per_filter_config,json=perFilterConfig,proto3" json:"per_filter_config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // Deprecated: Do not use.
-	TypedPerFilterConfig       map[string]*any.Any        `protobuf:"bytes,13,rep,name=typed_per_filter_config,json=typedPerFilterConfig,proto3" json:"typed_per_filter_config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	RequestHeadersToAdd        []*core.HeaderValueOption  `protobuf:"bytes,9,rep,name=request_headers_to_add,json=requestHeadersToAdd,proto3" json:"request_headers_to_add,omitempty"`
-	RequestHeadersToRemove     []string                   `protobuf:"bytes,12,rep,name=request_headers_to_remove,json=requestHeadersToRemove,proto3" json:"request_headers_to_remove,omitempty"`
-	ResponseHeadersToAdd       []*core.HeaderValueOption  `protobuf:"bytes,10,rep,name=response_headers_to_add,json=responseHeadersToAdd,proto3" json:"response_headers_to_add,omitempty"`
-	ResponseHeadersToRemove    []string                   `protobuf:"bytes,11,rep,name=response_headers_to_remove,json=responseHeadersToRemove,proto3" json:"response_headers_to_remove,omitempty"`
-	Tracing                    *Tracing                   `protobuf:"bytes,15,opt,name=tracing,proto3" json:"tracing,omitempty"`
-	PerRequestBufferLimitBytes *wrappers.UInt32Value      `protobuf:"bytes,16,opt,name=per_request_buffer_limit_bytes,json=perRequestBufferLimitBytes,proto3" json:"per_request_buffer_limit_bytes,omitempty"`
-	XXX_NoUnkeyedLiteral       struct{}                   `json:"-"`
-	XXX_unrecognized           []byte                     `json:"-"`
-	XXX_sizecache              int32                      `json:"-"`
+	Action isRoute_Action `protobuf_oneof:"action"`
+	// The Metadata field can be used to provide additional information
+	// about the route. It can be used for configuration, stats, and logging.
+	// The metadata should go under the filter namespace that will need it.
+	// For instance, if the metadata is intended for the Router filter,
+	// the filter name should be specified as *envoy.router*.
+	Metadata *core.Metadata `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	// Decorator for the matched route.
+	Decorator *Decorator `protobuf:"bytes,5,opt,name=decorator,proto3" json:"decorator,omitempty"`
+	// The per_filter_config field can be used to provide route-specific
+	// configurations for filters. The key should match the filter name, such as
+	// *envoy.buffer* for the HTTP buffer filter. Use of this field is filter
+	// specific; see the :ref:`HTTP filter documentation <config_http_filters>` for
+	// if and how it is utilized.
+	PerFilterConfig map[string]*_struct.Struct `protobuf:"bytes,8,rep,name=per_filter_config,json=perFilterConfig,proto3" json:"per_filter_config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // Deprecated: Do not use.
+	// The per_filter_config field can be used to provide route-specific
+	// configurations for filters. The key should match the filter name, such as
+	// *envoy.buffer* for the HTTP buffer filter. Use of this field is filter
+	// specific; see the :ref:`HTTP filter documentation <config_http_filters>` for
+	// if and how it is utilized.
+	TypedPerFilterConfig map[string]*any.Any `protobuf:"bytes,13,rep,name=typed_per_filter_config,json=typedPerFilterConfig,proto3" json:"typed_per_filter_config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// Specifies a set of headers that will be added to requests matching this
+	// route. Headers specified at this level are applied before headers from the
+	// enclosing :ref:`envoy_api_msg_route.VirtualHost` and
+	// :ref:`envoy_api_msg_RouteConfiguration`. For more information, including details on
+	// header value syntax, see the documentation on :ref:`custom request headers
+	// <config_http_conn_man_headers_custom_request_headers>`.
+	RequestHeadersToAdd []*core.HeaderValueOption `protobuf:"bytes,9,rep,name=request_headers_to_add,json=requestHeadersToAdd,proto3" json:"request_headers_to_add,omitempty"`
+	// Specifies a list of HTTP headers that should be removed from each request
+	// matching this route.
+	RequestHeadersToRemove []string `protobuf:"bytes,12,rep,name=request_headers_to_remove,json=requestHeadersToRemove,proto3" json:"request_headers_to_remove,omitempty"`
+	// Specifies a set of headers that will be added to responses to requests
+	// matching this route. Headers specified at this level are applied before
+	// headers from the enclosing :ref:`envoy_api_msg_route.VirtualHost` and
+	// :ref:`envoy_api_msg_RouteConfiguration`. For more information, including
+	// details on header value syntax, see the documentation on
+	// :ref:`custom request headers <config_http_conn_man_headers_custom_request_headers>`.
+	ResponseHeadersToAdd []*core.HeaderValueOption `protobuf:"bytes,10,rep,name=response_headers_to_add,json=responseHeadersToAdd,proto3" json:"response_headers_to_add,omitempty"`
+	// Specifies a list of HTTP headers that should be removed from each response
+	// to requests matching this route.
+	ResponseHeadersToRemove []string `protobuf:"bytes,11,rep,name=response_headers_to_remove,json=responseHeadersToRemove,proto3" json:"response_headers_to_remove,omitempty"`
+	// Presence of the object defines whether the connection manager's tracing configuration
+	// is overridden by this route specific instance.
+	Tracing *Tracing `protobuf:"bytes,15,opt,name=tracing,proto3" json:"tracing,omitempty"`
+	// The maximum bytes which will be buffered for retries and shadowing.
+	// If set, the bytes actually buffered will be the minimum value of this and the
+	// listener per_connection_buffer_limit_bytes.
+	PerRequestBufferLimitBytes *wrappers.UInt32Value  `protobuf:"bytes,16,opt,name=per_request_buffer_limit_bytes,json=perRequestBufferLimitBytes,proto3" json:"per_request_buffer_limit_bytes,omitempty"`
+	HttpPreClientFilters       []*HttpPreClientFilter `protobuf:"bytes,20,rep,name=http_pre_client_filters,json=httpPreClientFilters,proto3" json:"http_pre_client_filters,omitempty"`
+	XXX_NoUnkeyedLiteral       struct{}               `json:"-"`
+	XXX_unrecognized           []byte                 `json:"-"`
+	XXX_sizecache              int32                  `json:"-"`
 }
 
 func (m *Route) Reset()         { *m = Route{} }
@@ -491,6 +628,13 @@ func (m *Route) GetPerRequestBufferLimitBytes() *wrappers.UInt32Value {
 	return nil
 }
 
+func (m *Route) GetHttpPreClientFilters() []*HttpPreClientFilter {
+	if m != nil {
+		return m.HttpPreClientFilters
+	}
+	return nil
+}
+
 // XXX_OneofWrappers is for the internal use of the proto package.
 func (*Route) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
@@ -500,20 +644,129 @@ func (*Route) XXX_OneofWrappers() []interface{} {
 	}
 }
 
-type WeightedCluster struct {
-	Clusters             []*WeightedCluster_ClusterWeight `protobuf:"bytes,1,rep,name=clusters,proto3" json:"clusters,omitempty"`
-	TotalWeight          *wrappers.UInt32Value            `protobuf:"bytes,3,opt,name=total_weight,json=totalWeight,proto3" json:"total_weight,omitempty"`
-	RuntimeKeyPrefix     string                           `protobuf:"bytes,2,opt,name=runtime_key_prefix,json=runtimeKeyPrefix,proto3" json:"runtime_key_prefix,omitempty"`
+type HttpPreClientFilter struct {
+	// The name of the filter to instantiate. The name must match a supported
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Filter specific configuration which depends on the filter being instantiated. See the supported
+	// filters for further documentation.
+	//
+	// Types that are valid to be assigned to ConfigType:
+	//	*HttpPreClientFilter_Config
+	//	*HttpPreClientFilter_TypedConfig
+	ConfigType           isHttpPreClientFilter_ConfigType `protobuf_oneof:"config_type"`
 	XXX_NoUnkeyedLiteral struct{}                         `json:"-"`
 	XXX_unrecognized     []byte                           `json:"-"`
 	XXX_sizecache        int32                            `json:"-"`
+}
+
+func (m *HttpPreClientFilter) Reset()         { *m = HttpPreClientFilter{} }
+func (m *HttpPreClientFilter) String() string { return proto.CompactTextString(m) }
+func (*HttpPreClientFilter) ProtoMessage()    {}
+func (*HttpPreClientFilter) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7dc2895fb75d9d41, []int{2}
+}
+
+func (m *HttpPreClientFilter) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_HttpPreClientFilter.Unmarshal(m, b)
+}
+func (m *HttpPreClientFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_HttpPreClientFilter.Marshal(b, m, deterministic)
+}
+func (m *HttpPreClientFilter) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HttpPreClientFilter.Merge(m, src)
+}
+func (m *HttpPreClientFilter) XXX_Size() int {
+	return xxx_messageInfo_HttpPreClientFilter.Size(m)
+}
+func (m *HttpPreClientFilter) XXX_DiscardUnknown() {
+	xxx_messageInfo_HttpPreClientFilter.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_HttpPreClientFilter proto.InternalMessageInfo
+
+func (m *HttpPreClientFilter) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+type isHttpPreClientFilter_ConfigType interface {
+	isHttpPreClientFilter_ConfigType()
+}
+
+type HttpPreClientFilter_Config struct {
+	Config *_struct.Struct `protobuf:"bytes,2,opt,name=config,proto3,oneof"`
+}
+
+type HttpPreClientFilter_TypedConfig struct {
+	TypedConfig *any.Any `protobuf:"bytes,4,opt,name=typed_config,json=typedConfig,proto3,oneof"`
+}
+
+func (*HttpPreClientFilter_Config) isHttpPreClientFilter_ConfigType() {}
+
+func (*HttpPreClientFilter_TypedConfig) isHttpPreClientFilter_ConfigType() {}
+
+func (m *HttpPreClientFilter) GetConfigType() isHttpPreClientFilter_ConfigType {
+	if m != nil {
+		return m.ConfigType
+	}
+	return nil
+}
+
+func (m *HttpPreClientFilter) GetConfig() *_struct.Struct {
+	if x, ok := m.GetConfigType().(*HttpPreClientFilter_Config); ok {
+		return x.Config
+	}
+	return nil
+}
+
+func (m *HttpPreClientFilter) GetTypedConfig() *any.Any {
+	if x, ok := m.GetConfigType().(*HttpPreClientFilter_TypedConfig); ok {
+		return x.TypedConfig
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*HttpPreClientFilter) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*HttpPreClientFilter_Config)(nil),
+		(*HttpPreClientFilter_TypedConfig)(nil),
+	}
+}
+
+// Compared to the :ref:`cluster <envoy_api_field_route.RouteAction.cluster>` field that specifies a
+// single upstream cluster as the target of a request, the :ref:`weighted_clusters
+// <envoy_api_field_route.RouteAction.weighted_clusters>` option allows for specification of
+// multiple upstream clusters along with weights that indicate the percentage of
+// traffic to be forwarded to each cluster. The router selects an upstream cluster based on the
+// weights.
+type WeightedCluster struct {
+	// Specifies one or more upstream clusters associated with the route.
+	Clusters []*WeightedCluster_ClusterWeight `protobuf:"bytes,1,rep,name=clusters,proto3" json:"clusters,omitempty"`
+	// Specifies the total weight across all clusters. The sum of all cluster weights must equal this
+	// value, which must be greater than 0. Defaults to 100.
+	TotalWeight *wrappers.UInt32Value `protobuf:"bytes,3,opt,name=total_weight,json=totalWeight,proto3" json:"total_weight,omitempty"`
+	// Specifies the runtime key prefix that should be used to construct the
+	// runtime keys associated with each cluster. When the *runtime_key_prefix* is
+	// specified, the router will look for weights associated with each upstream
+	// cluster under the key *runtime_key_prefix* + "." + *cluster[i].name* where
+	// *cluster[i]* denotes an entry in the clusters array field. If the runtime
+	// key for the cluster does not exist, the value specified in the
+	// configuration file will be used as the default weight. See the :ref:`runtime documentation
+	// <operations_runtime>` for how key names map to the underlying implementation.
+	RuntimeKeyPrefix     string   `protobuf:"bytes,2,opt,name=runtime_key_prefix,json=runtimeKeyPrefix,proto3" json:"runtime_key_prefix,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *WeightedCluster) Reset()         { *m = WeightedCluster{} }
 func (m *WeightedCluster) String() string { return proto.CompactTextString(m) }
 func (*WeightedCluster) ProtoMessage()    {}
 func (*WeightedCluster) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{2}
+	return fileDescriptor_7dc2895fb75d9d41, []int{3}
 }
 
 func (m *WeightedCluster) XXX_Unmarshal(b []byte) error {
@@ -555,26 +808,66 @@ func (m *WeightedCluster) GetRuntimeKeyPrefix() string {
 	return ""
 }
 
+// [#next-free-field: 11]
 type WeightedCluster_ClusterWeight struct {
-	Name                    string                     `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Weight                  *wrappers.UInt32Value      `protobuf:"bytes,2,opt,name=weight,proto3" json:"weight,omitempty"`
-	MetadataMatch           *core.Metadata             `protobuf:"bytes,3,opt,name=metadata_match,json=metadataMatch,proto3" json:"metadata_match,omitempty"`
-	RequestHeadersToAdd     []*core.HeaderValueOption  `protobuf:"bytes,4,rep,name=request_headers_to_add,json=requestHeadersToAdd,proto3" json:"request_headers_to_add,omitempty"`
-	RequestHeadersToRemove  []string                   `protobuf:"bytes,9,rep,name=request_headers_to_remove,json=requestHeadersToRemove,proto3" json:"request_headers_to_remove,omitempty"`
-	ResponseHeadersToAdd    []*core.HeaderValueOption  `protobuf:"bytes,5,rep,name=response_headers_to_add,json=responseHeadersToAdd,proto3" json:"response_headers_to_add,omitempty"`
-	ResponseHeadersToRemove []string                   `protobuf:"bytes,6,rep,name=response_headers_to_remove,json=responseHeadersToRemove,proto3" json:"response_headers_to_remove,omitempty"`
-	PerFilterConfig         map[string]*_struct.Struct `protobuf:"bytes,8,rep,name=per_filter_config,json=perFilterConfig,proto3" json:"per_filter_config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // Deprecated: Do not use.
-	TypedPerFilterConfig    map[string]*any.Any        `protobuf:"bytes,10,rep,name=typed_per_filter_config,json=typedPerFilterConfig,proto3" json:"typed_per_filter_config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	XXX_NoUnkeyedLiteral    struct{}                   `json:"-"`
-	XXX_unrecognized        []byte                     `json:"-"`
-	XXX_sizecache           int32                      `json:"-"`
+	// Name of the upstream cluster. The cluster must exist in the
+	// :ref:`cluster manager configuration <config_cluster_manager>`.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// An integer between 0 and :ref:`total_weight
+	// <envoy_api_field_route.WeightedCluster.total_weight>`. When a request matches the route,
+	// the choice of an upstream cluster is determined by its weight. The sum of weights across all
+	// entries in the clusters array must add up to the total_weight, which defaults to 100.
+	Weight *wrappers.UInt32Value `protobuf:"bytes,2,opt,name=weight,proto3" json:"weight,omitempty"`
+	// Optional endpoint metadata match criteria used by the subset load balancer. Only endpoints in
+	// the upstream cluster with metadata matching what is set in this field will be considered for
+	// load balancing. Note that this will be merged with what's provided in :ref:
+	// `RouteAction.MetadataMatch <envoy_api_field_route.RouteAction.metadata_match>`, with values
+	// here taking precedence. The filter name should be specified as *envoy.lb*.
+	MetadataMatch *core.Metadata `protobuf:"bytes,3,opt,name=metadata_match,json=metadataMatch,proto3" json:"metadata_match,omitempty"`
+	// Specifies a list of headers to be added to requests when this cluster is selected
+	// through the enclosing :ref:`envoy_api_msg_route.RouteAction`.
+	// Headers specified at this level are applied before headers from the enclosing
+	// :ref:`envoy_api_msg_route.Route`, :ref:`envoy_api_msg_route.VirtualHost`, and
+	// :ref:`envoy_api_msg_RouteConfiguration`. For more information, including details on
+	// header value syntax, see the documentation on :ref:`custom request headers
+	// <config_http_conn_man_headers_custom_request_headers>`.
+	RequestHeadersToAdd []*core.HeaderValueOption `protobuf:"bytes,4,rep,name=request_headers_to_add,json=requestHeadersToAdd,proto3" json:"request_headers_to_add,omitempty"`
+	// Specifies a list of HTTP headers that should be removed from each request when
+	// this cluster is selected through the enclosing :ref:`envoy_api_msg_route.RouteAction`.
+	RequestHeadersToRemove []string `protobuf:"bytes,9,rep,name=request_headers_to_remove,json=requestHeadersToRemove,proto3" json:"request_headers_to_remove,omitempty"`
+	// Specifies a list of headers to be added to responses when this cluster is selected
+	// through the enclosing :ref:`envoy_api_msg_route.RouteAction`.
+	// Headers specified at this level are applied before headers from the enclosing
+	// :ref:`envoy_api_msg_route.Route`, :ref:`envoy_api_msg_route.VirtualHost`, and
+	// :ref:`envoy_api_msg_RouteConfiguration`. For more information, including details on
+	// header value syntax, see the documentation on :ref:`custom request headers
+	// <config_http_conn_man_headers_custom_request_headers>`.
+	ResponseHeadersToAdd []*core.HeaderValueOption `protobuf:"bytes,5,rep,name=response_headers_to_add,json=responseHeadersToAdd,proto3" json:"response_headers_to_add,omitempty"`
+	// Specifies a list of headers to be removed from responses when this cluster is selected
+	// through the enclosing :ref:`envoy_api_msg_route.RouteAction`.
+	ResponseHeadersToRemove []string `protobuf:"bytes,6,rep,name=response_headers_to_remove,json=responseHeadersToRemove,proto3" json:"response_headers_to_remove,omitempty"`
+	// The per_filter_config field can be used to provide weighted cluster-specific
+	// configurations for filters. The key should match the filter name, such as
+	// *envoy.buffer* for the HTTP buffer filter. Use of this field is filter
+	// specific; see the :ref:`HTTP filter documentation <config_http_filters>`
+	// for if and how it is utilized.
+	PerFilterConfig map[string]*_struct.Struct `protobuf:"bytes,8,rep,name=per_filter_config,json=perFilterConfig,proto3" json:"per_filter_config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // Deprecated: Do not use.
+	// The per_filter_config field can be used to provide weighted cluster-specific
+	// configurations for filters. The key should match the filter name, such as
+	// *envoy.buffer* for the HTTP buffer filter. Use of this field is filter
+	// specific; see the :ref:`HTTP filter documentation <config_http_filters>`
+	// for if and how it is utilized.
+	TypedPerFilterConfig map[string]*any.Any `protobuf:"bytes,10,rep,name=typed_per_filter_config,json=typedPerFilterConfig,proto3" json:"typed_per_filter_config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
 }
 
 func (m *WeightedCluster_ClusterWeight) Reset()         { *m = WeightedCluster_ClusterWeight{} }
 func (m *WeightedCluster_ClusterWeight) String() string { return proto.CompactTextString(m) }
 func (*WeightedCluster_ClusterWeight) ProtoMessage()    {}
 func (*WeightedCluster_ClusterWeight) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{2, 0}
+	return fileDescriptor_7dc2895fb75d9d41, []int{3, 0}
 }
 
 func (m *WeightedCluster_ClusterWeight) XXX_Unmarshal(b []byte) error {
@@ -659,18 +952,54 @@ func (m *WeightedCluster_ClusterWeight) GetTypedPerFilterConfig() map[string]*an
 	return nil
 }
 
+// [#next-free-field: 12]
 type RouteMatch struct {
 	// Types that are valid to be assigned to PathSpecifier:
 	//	*RouteMatch_Prefix
 	//	*RouteMatch_Path
 	//	*RouteMatch_Regex
 	//	*RouteMatch_SafeRegex
-	PathSpecifier        isRouteMatch_PathSpecifier         `protobuf_oneof:"path_specifier"`
-	CaseSensitive        *wrappers.BoolValue                `protobuf:"bytes,4,opt,name=case_sensitive,json=caseSensitive,proto3" json:"case_sensitive,omitempty"`
-	RuntimeFraction      *core.RuntimeFractionalPercent     `protobuf:"bytes,9,opt,name=runtime_fraction,json=runtimeFraction,proto3" json:"runtime_fraction,omitempty"`
-	Headers              []*HeaderMatcher                   `protobuf:"bytes,6,rep,name=headers,proto3" json:"headers,omitempty"`
-	QueryParameters      []*QueryParameterMatcher           `protobuf:"bytes,7,rep,name=query_parameters,json=queryParameters,proto3" json:"query_parameters,omitempty"`
-	Grpc                 *RouteMatch_GrpcRouteMatchOptions  `protobuf:"bytes,8,opt,name=grpc,proto3" json:"grpc,omitempty"`
+	PathSpecifier isRouteMatch_PathSpecifier `protobuf_oneof:"path_specifier"`
+	// Indicates that prefix/path matching should be case insensitive. The default
+	// is true.
+	CaseSensitive *wrappers.BoolValue `protobuf:"bytes,4,opt,name=case_sensitive,json=caseSensitive,proto3" json:"case_sensitive,omitempty"`
+	// Indicates that the route should additionally match on a runtime key. Every time the route
+	// is considered for a match, it must also fall under the percentage of matches indicated by
+	// this field. For some fraction N/D, a random number in the range [0,D) is selected. If the
+	// number is <= the value of the numerator N, or if the key is not present, the default
+	// value, the router continues to evaluate the remaining match criteria. A runtime_fraction
+	// route configuration can be used to roll out route changes in a gradual manner without full
+	// code/config deploys. Refer to the :ref:`traffic shifting
+	// <config_http_conn_man_route_table_traffic_splitting_shift>` docs for additional documentation.
+	//
+	// .. note::
+	//
+	//    Parsing this field is implemented such that the runtime key's data may be represented
+	//    as a FractionalPercent proto represented as JSON/YAML and may also be represented as an
+	//    integer with the assumption that the value is an integral percentage out of 100. For
+	//    instance, a runtime key lookup returning the value "42" would parse as a FractionalPercent
+	//    whose numerator is 42 and denominator is HUNDRED. This preserves legacy semantics.
+	RuntimeFraction *core.RuntimeFractionalPercent `protobuf:"bytes,9,opt,name=runtime_fraction,json=runtimeFraction,proto3" json:"runtime_fraction,omitempty"`
+	// Specifies a set of headers that the route should match on. The router will
+	// check the request’s headers against all the specified headers in the route
+	// config. A match will happen if all the headers in the route are present in
+	// the request with the same values (or based on presence if the value field
+	// is not in the config).
+	Headers []*HeaderMatcher `protobuf:"bytes,6,rep,name=headers,proto3" json:"headers,omitempty"`
+	// Specifies a set of URL query parameters on which the route should
+	// match. The router will check the query string from the *path* header
+	// against all the specified query parameters. If the number of specified
+	// query parameters is nonzero, they all must match the *path* header's
+	// query string for a match to occur.
+	QueryParameters []*QueryParameterMatcher `protobuf:"bytes,7,rep,name=query_parameters,json=queryParameters,proto3" json:"query_parameters,omitempty"`
+	// If specified, only gRPC requests will be matched. The router will check
+	// that the content-type header has a application/grpc or one of the various
+	// application/grpc+ values.
+	Grpc *RouteMatch_GrpcRouteMatchOptions `protobuf:"bytes,8,opt,name=grpc,proto3" json:"grpc,omitempty"`
+	// If specified, the client tls context will be matched against the defined
+	// match options.
+	//
+	// [#next-major-version: unify with RBAC]
 	TlsContext           *RouteMatch_TlsContextMatchOptions `protobuf:"bytes,11,opt,name=tls_context,json=tlsContext,proto3" json:"tls_context,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                           `json:"-"`
 	XXX_unrecognized     []byte                             `json:"-"`
@@ -681,7 +1010,7 @@ func (m *RouteMatch) Reset()         { *m = RouteMatch{} }
 func (m *RouteMatch) String() string { return proto.CompactTextString(m) }
 func (*RouteMatch) ProtoMessage()    {}
 func (*RouteMatch) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{3}
+	return fileDescriptor_7dc2895fb75d9d41, []int{4}
 }
 
 func (m *RouteMatch) XXX_Unmarshal(b []byte) error {
@@ -828,7 +1157,7 @@ func (m *RouteMatch_GrpcRouteMatchOptions) Reset()         { *m = RouteMatch_Grp
 func (m *RouteMatch_GrpcRouteMatchOptions) String() string { return proto.CompactTextString(m) }
 func (*RouteMatch_GrpcRouteMatchOptions) ProtoMessage()    {}
 func (*RouteMatch_GrpcRouteMatchOptions) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{3, 0}
+	return fileDescriptor_7dc2895fb75d9d41, []int{4, 0}
 }
 
 func (m *RouteMatch_GrpcRouteMatchOptions) XXX_Unmarshal(b []byte) error {
@@ -850,6 +1179,7 @@ func (m *RouteMatch_GrpcRouteMatchOptions) XXX_DiscardUnknown() {
 var xxx_messageInfo_RouteMatch_GrpcRouteMatchOptions proto.InternalMessageInfo
 
 type RouteMatch_TlsContextMatchOptions struct {
+	// If specified, the route will match against whether or not a certificate is presented.
 	Presented            *wrappers.BoolValue `protobuf:"bytes,1,opt,name=presented,proto3" json:"presented,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
 	XXX_unrecognized     []byte              `json:"-"`
@@ -860,7 +1190,7 @@ func (m *RouteMatch_TlsContextMatchOptions) Reset()         { *m = RouteMatch_Tl
 func (m *RouteMatch_TlsContextMatchOptions) String() string { return proto.CompactTextString(m) }
 func (*RouteMatch_TlsContextMatchOptions) ProtoMessage()    {}
 func (*RouteMatch_TlsContextMatchOptions) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{3, 1}
+	return fileDescriptor_7dc2895fb75d9d41, []int{4, 1}
 }
 
 func (m *RouteMatch_TlsContextMatchOptions) XXX_Unmarshal(b []byte) error {
@@ -888,19 +1218,49 @@ func (m *RouteMatch_TlsContextMatchOptions) GetPresented() *wrappers.BoolValue {
 	return nil
 }
 
+// [#next-free-field: 12]
 type CorsPolicy struct {
-	AllowOrigin            []string                 `protobuf:"bytes,1,rep,name=allow_origin,json=allowOrigin,proto3" json:"allow_origin,omitempty"`                  // Deprecated: Do not use.
-	AllowOriginRegex       []string                 `protobuf:"bytes,8,rep,name=allow_origin_regex,json=allowOriginRegex,proto3" json:"allow_origin_regex,omitempty"` // Deprecated: Do not use.
+	// Specifies the origins that will be allowed to do CORS requests.
+	//
+	// An origin is allowed if either allow_origin or allow_origin_regex match.
+	//
+	// .. attention::
+	//  This field has been deprecated in favor of `allow_origin_string_match`.
+	AllowOrigin []string `protobuf:"bytes,1,rep,name=allow_origin,json=allowOrigin,proto3" json:"allow_origin,omitempty"` // Deprecated: Do not use.
+	// Specifies regex patterns that match allowed origins.
+	//
+	// An origin is allowed if either allow_origin or allow_origin_regex match.
+	//
+	// .. attention::
+	//   This field has been deprecated in favor of `allow_origin_string_match` as it is not safe for
+	//   use with untrusted input in all cases.
+	AllowOriginRegex []string `protobuf:"bytes,8,rep,name=allow_origin_regex,json=allowOriginRegex,proto3" json:"allow_origin_regex,omitempty"` // Deprecated: Do not use.
+	// Specifies string patterns that match allowed origins. An origin is allowed if any of the
+	// string matchers match.
 	AllowOriginStringMatch []*matcher.StringMatcher `protobuf:"bytes,11,rep,name=allow_origin_string_match,json=allowOriginStringMatch,proto3" json:"allow_origin_string_match,omitempty"`
-	AllowMethods           string                   `protobuf:"bytes,2,opt,name=allow_methods,json=allowMethods,proto3" json:"allow_methods,omitempty"`
-	AllowHeaders           string                   `protobuf:"bytes,3,opt,name=allow_headers,json=allowHeaders,proto3" json:"allow_headers,omitempty"`
-	ExposeHeaders          string                   `protobuf:"bytes,4,opt,name=expose_headers,json=exposeHeaders,proto3" json:"expose_headers,omitempty"`
-	MaxAge                 string                   `protobuf:"bytes,5,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
-	AllowCredentials       *wrappers.BoolValue      `protobuf:"bytes,6,opt,name=allow_credentials,json=allowCredentials,proto3" json:"allow_credentials,omitempty"`
+	// Specifies the content for the *access-control-allow-methods* header.
+	AllowMethods string `protobuf:"bytes,2,opt,name=allow_methods,json=allowMethods,proto3" json:"allow_methods,omitempty"`
+	// Specifies the content for the *access-control-allow-headers* header.
+	AllowHeaders string `protobuf:"bytes,3,opt,name=allow_headers,json=allowHeaders,proto3" json:"allow_headers,omitempty"`
+	// Specifies the content for the *access-control-expose-headers* header.
+	ExposeHeaders string `protobuf:"bytes,4,opt,name=expose_headers,json=exposeHeaders,proto3" json:"expose_headers,omitempty"`
+	// Specifies the content for the *access-control-max-age* header.
+	MaxAge string `protobuf:"bytes,5,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
+	// Specifies whether the resource allows credentials.
+	AllowCredentials *wrappers.BoolValue `protobuf:"bytes,6,opt,name=allow_credentials,json=allowCredentials,proto3" json:"allow_credentials,omitempty"`
 	// Types that are valid to be assigned to EnabledSpecifier:
 	//	*CorsPolicy_Enabled
 	//	*CorsPolicy_FilterEnabled
-	EnabledSpecifier     isCorsPolicy_EnabledSpecifier  `protobuf_oneof:"enabled_specifier"`
+	EnabledSpecifier isCorsPolicy_EnabledSpecifier `protobuf_oneof:"enabled_specifier"`
+	// Specifies the % of requests for which the CORS policies will be evaluated and tracked, but not
+	// enforced.
+	//
+	// This field is intended to be used when ``filter_enabled`` and ``enabled`` are off. One of those
+	// fields have to explicitly disable the filter in order for this setting to take effect.
+	//
+	// If :ref:`runtime_key <envoy_api_field_core.runtimefractionalpercent.runtime_key>` is specified,
+	// Envoy will lookup the runtime key to get the percentage of requests for which it will evaluate
+	// and track the request's *Origin* to determine if it's valid but will not enforce any policies.
 	ShadowEnabled        *core.RuntimeFractionalPercent `protobuf:"bytes,10,opt,name=shadow_enabled,json=shadowEnabled,proto3" json:"shadow_enabled,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                       `json:"-"`
 	XXX_unrecognized     []byte                         `json:"-"`
@@ -911,7 +1271,7 @@ func (m *CorsPolicy) Reset()         { *m = CorsPolicy{} }
 func (m *CorsPolicy) String() string { return proto.CompactTextString(m) }
 func (*CorsPolicy) ProtoMessage()    {}
 func (*CorsPolicy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{4}
+	return fileDescriptor_7dc2895fb75d9d41, []int{5}
 }
 
 func (m *CorsPolicy) XXX_Unmarshal(b []byte) error {
@@ -1043,44 +1403,152 @@ func (*CorsPolicy) XXX_OneofWrappers() []interface{} {
 	}
 }
 
+// [#next-free-field: 30]
 type RouteAction struct {
 	// Types that are valid to be assigned to ClusterSpecifier:
 	//	*RouteAction_Cluster
 	//	*RouteAction_ClusterHeader
 	//	*RouteAction_WeightedClusters
-	ClusterSpecifier            isRouteAction_ClusterSpecifier          `protobuf_oneof:"cluster_specifier"`
+	ClusterSpecifier isRouteAction_ClusterSpecifier `protobuf_oneof:"cluster_specifier"`
+	// The HTTP status code to use when configured cluster is not found.
+	// The default response code is 503 Service Unavailable.
 	ClusterNotFoundResponseCode RouteAction_ClusterNotFoundResponseCode `protobuf:"varint,20,opt,name=cluster_not_found_response_code,json=clusterNotFoundResponseCode,proto3,enum=envoy.api.v2.route.RouteAction_ClusterNotFoundResponseCode" json:"cluster_not_found_response_code,omitempty"`
-	MetadataMatch               *core.Metadata                          `protobuf:"bytes,4,opt,name=metadata_match,json=metadataMatch,proto3" json:"metadata_match,omitempty"`
-	PrefixRewrite               string                                  `protobuf:"bytes,5,opt,name=prefix_rewrite,json=prefixRewrite,proto3" json:"prefix_rewrite,omitempty"`
+	// Optional endpoint metadata match criteria used by the subset load balancer. Only endpoints
+	// in the upstream cluster with metadata matching what's set in this field will be considered
+	// for load balancing. If using :ref:`weighted_clusters
+	// <envoy_api_field_route.RouteAction.weighted_clusters>`, metadata will be merged, with values
+	// provided there taking precedence. The filter name should be specified as *envoy.lb*.
+	MetadataMatch *core.Metadata `protobuf:"bytes,4,opt,name=metadata_match,json=metadataMatch,proto3" json:"metadata_match,omitempty"`
+	// Indicates that during forwarding, the matched prefix (or path) should be
+	// swapped with this value. This option allows application URLs to be rooted
+	// at a different path from those exposed at the reverse proxy layer. The router filter will
+	// place the original path before rewrite into the :ref:`x-envoy-original-path
+	// <config_http_filters_router_x-envoy-original-path>` header.
+	//
+	// .. attention::
+	//
+	//   Pay careful attention to the use of trailing slashes in the
+	//   :ref:`route's match <envoy_api_field_route.Route.match>` prefix value.
+	//   Stripping a prefix from a path requires multiple Routes to handle all cases. For example,
+	//   rewriting */prefix* to */* and */prefix/etc* to */etc* cannot be done in a single
+	//   :ref:`Route <envoy_api_msg_route.Route>`, as shown by the below config entries:
+	//
+	//   .. code-block:: yaml
+	//
+	//     - match:
+	//         prefix: "/prefix/"
+	//       route:
+	//         prefix_rewrite: "/"
+	//     - match:
+	//         prefix: "/prefix"
+	//       route:
+	//         prefix_rewrite: "/"
+	//
+	//   Having above entries in the config, requests to */prefix* will be stripped to */*, while
+	//   requests to */prefix/etc* will be stripped to */etc*.
+	PrefixRewrite string `protobuf:"bytes,5,opt,name=prefix_rewrite,json=prefixRewrite,proto3" json:"prefix_rewrite,omitempty"`
 	// Types that are valid to be assigned to HostRewriteSpecifier:
 	//	*RouteAction_HostRewrite
 	//	*RouteAction_AutoHostRewrite
 	//	*RouteAction_AutoHostRewriteHeader
-	HostRewriteSpecifier   isRouteAction_HostRewriteSpecifier `protobuf_oneof:"host_rewrite_specifier"`
-	Timeout                *duration.Duration                 `protobuf:"bytes,8,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	IdleTimeout            *duration.Duration                 `protobuf:"bytes,24,opt,name=idle_timeout,json=idleTimeout,proto3" json:"idle_timeout,omitempty"`
-	RetryPolicy            *RetryPolicy                       `protobuf:"bytes,9,opt,name=retry_policy,json=retryPolicy,proto3" json:"retry_policy,omitempty"`
-	RequestMirrorPolicy    *RouteAction_RequestMirrorPolicy   `protobuf:"bytes,10,opt,name=request_mirror_policy,json=requestMirrorPolicy,proto3" json:"request_mirror_policy,omitempty"`
-	Priority               core.RoutingPriority               `protobuf:"varint,11,opt,name=priority,proto3,enum=envoy.api.v2.core.RoutingPriority" json:"priority,omitempty"`
-	RateLimits             []*RateLimit                       `protobuf:"bytes,13,rep,name=rate_limits,json=rateLimits,proto3" json:"rate_limits,omitempty"`
-	IncludeVhRateLimits    *wrappers.BoolValue                `protobuf:"bytes,14,opt,name=include_vh_rate_limits,json=includeVhRateLimits,proto3" json:"include_vh_rate_limits,omitempty"`
-	HashPolicy             []*RouteAction_HashPolicy          `protobuf:"bytes,15,rep,name=hash_policy,json=hashPolicy,proto3" json:"hash_policy,omitempty"`
-	Cors                   *CorsPolicy                        `protobuf:"bytes,17,opt,name=cors,proto3" json:"cors,omitempty"`
-	MaxGrpcTimeout         *duration.Duration                 `protobuf:"bytes,23,opt,name=max_grpc_timeout,json=maxGrpcTimeout,proto3" json:"max_grpc_timeout,omitempty"`
+	HostRewriteSpecifier isRouteAction_HostRewriteSpecifier `protobuf_oneof:"host_rewrite_specifier"`
+	// Specifies the upstream timeout for the route. If not specified, the default is 15s. This
+	// spans between the point at which the entire downstream request (i.e. end-of-stream) has been
+	// processed and when the upstream response has been completely processed. A value of 0 will
+	// disable the route's timeout.
+	//
+	// .. note::
+	//
+	//   This timeout includes all retries. See also
+	//   :ref:`config_http_filters_router_x-envoy-upstream-rq-timeout-ms`,
+	//   :ref:`config_http_filters_router_x-envoy-upstream-rq-per-try-timeout-ms`, and the
+	//   :ref:`retry overview <arch_overview_http_routing_retry>`.
+	Timeout *duration.Duration `protobuf:"bytes,8,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	// Specifies the idle timeout for the route. If not specified, there is no per-route idle timeout,
+	// although the connection manager wide :ref:`stream_idle_timeout
+	// <envoy_api_field_config.filter.network.http_connection_manager.v2.HttpConnectionManager.stream_idle_timeout>`
+	// will still apply. A value of 0 will completely disable the route's idle timeout, even if a
+	// connection manager stream idle timeout is configured.
+	//
+	// The idle timeout is distinct to :ref:`timeout
+	// <envoy_api_field_route.RouteAction.timeout>`, which provides an upper bound
+	// on the upstream response time; :ref:`idle_timeout
+	// <envoy_api_field_route.RouteAction.idle_timeout>` instead bounds the amount
+	// of time the request's stream may be idle.
+	//
+	// After header decoding, the idle timeout will apply on downstream and
+	// upstream request events. Each time an encode/decode event for headers or
+	// data is processed for the stream, the timer will be reset. If the timeout
+	// fires, the stream is terminated with a 408 Request Timeout error code if no
+	// upstream response header has been received, otherwise a stream reset
+	// occurs.
+	IdleTimeout *duration.Duration `protobuf:"bytes,24,opt,name=idle_timeout,json=idleTimeout,proto3" json:"idle_timeout,omitempty"`
+	// Indicates that the route has a retry policy. Note that if this is set,
+	// it'll take precedence over the virtual host level retry policy entirely
+	// (e.g.: policies are not merged, most internal one becomes the enforced policy).
+	RetryPolicy *RetryPolicy `protobuf:"bytes,9,opt,name=retry_policy,json=retryPolicy,proto3" json:"retry_policy,omitempty"`
+	// Indicates that the route has a request mirroring policy.
+	RequestMirrorPolicy *RouteAction_RequestMirrorPolicy `protobuf:"bytes,10,opt,name=request_mirror_policy,json=requestMirrorPolicy,proto3" json:"request_mirror_policy,omitempty"`
+	// Optionally specifies the :ref:`routing priority <arch_overview_http_routing_priority>`.
+	Priority core.RoutingPriority `protobuf:"varint,11,opt,name=priority,proto3,enum=envoy.api.v2.core.RoutingPriority" json:"priority,omitempty"`
+	// Specifies a set of rate limit configurations that could be applied to the
+	// route.
+	RateLimits []*RateLimit `protobuf:"bytes,13,rep,name=rate_limits,json=rateLimits,proto3" json:"rate_limits,omitempty"`
+	// Specifies if the rate limit filter should include the virtual host rate
+	// limits. By default, if the route configured rate limits, the virtual host
+	// :ref:`rate_limits <envoy_api_field_route.VirtualHost.rate_limits>` are not applied to the
+	// request.
+	IncludeVhRateLimits *wrappers.BoolValue `protobuf:"bytes,14,opt,name=include_vh_rate_limits,json=includeVhRateLimits,proto3" json:"include_vh_rate_limits,omitempty"`
+	// Specifies a list of hash policies to use for ring hash load balancing. Each
+	// hash policy is evaluated individually and the combined result is used to
+	// route the request. The method of combination is deterministic such that
+	// identical lists of hash policies will produce the same hash. Since a hash
+	// policy examines specific parts of a request, it can fail to produce a hash
+	// (i.e. if the hashed header is not present). If (and only if) all configured
+	// hash policies fail to generate a hash, no hash will be produced for
+	// the route. In this case, the behavior is the same as if no hash policies
+	// were specified (i.e. the ring hash load balancer will choose a random
+	// backend). If a hash policy has the "terminal" attribute set to true, and
+	// there is already a hash generated, the hash is returned immediately,
+	// ignoring the rest of the hash policy list.
+	HashPolicy []*RouteAction_HashPolicy `protobuf:"bytes,15,rep,name=hash_policy,json=hashPolicy,proto3" json:"hash_policy,omitempty"`
+	// Indicates that the route has a CORS policy.
+	Cors *CorsPolicy `protobuf:"bytes,17,opt,name=cors,proto3" json:"cors,omitempty"`
+	// If present, and the request is a gRPC request, use the
+	// `grpc-timeout header <https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md>`_,
+	// or its default value (infinity) instead of
+	// :ref:`timeout <envoy_api_field_route.RouteAction.timeout>`, but limit the applied timeout
+	// to the maximum value specified here. If configured as 0, the maximum allowed timeout for
+	// gRPC requests is infinity. If not configured at all, the `grpc-timeout` header is not used
+	// and gRPC requests time out like any other requests using
+	// :ref:`timeout <envoy_api_field_route.RouteAction.timeout>` or its default.
+	// This can be used to prevent unexpected upstream request timeouts due to potentially long
+	// time gaps between gRPC request and response in gRPC streaming mode.
+	MaxGrpcTimeout *duration.Duration `protobuf:"bytes,23,opt,name=max_grpc_timeout,json=maxGrpcTimeout,proto3" json:"max_grpc_timeout,omitempty"`
+	// If present, Envoy will adjust the timeout provided by the `grpc-timeout` header by subtracting
+	// the provided duration from the header. This is useful in allowing Envoy to set its global
+	// timeout to be less than that of the deadline imposed by the calling client, which makes it more
+	// likely that Envoy will handle the timeout instead of having the call canceled by the client.
+	// The offset will only be applied if the provided grpc_timeout is greater than the offset. This
+	// ensures that the offset will only ever decrease the timeout and never set it to 0 (meaning
+	// infinity).
 	GrpcTimeoutOffset      *duration.Duration                 `protobuf:"bytes,28,opt,name=grpc_timeout_offset,json=grpcTimeoutOffset,proto3" json:"grpc_timeout_offset,omitempty"`
 	UpgradeConfigs         []*RouteAction_UpgradeConfig       `protobuf:"bytes,25,rep,name=upgrade_configs,json=upgradeConfigs,proto3" json:"upgrade_configs,omitempty"`
 	InternalRedirectAction RouteAction_InternalRedirectAction `protobuf:"varint,26,opt,name=internal_redirect_action,json=internalRedirectAction,proto3,enum=envoy.api.v2.route.RouteAction_InternalRedirectAction" json:"internal_redirect_action,omitempty"`
-	HedgePolicy            *HedgePolicy                       `protobuf:"bytes,27,opt,name=hedge_policy,json=hedgePolicy,proto3" json:"hedge_policy,omitempty"`
-	XXX_NoUnkeyedLiteral   struct{}                           `json:"-"`
-	XXX_unrecognized       []byte                             `json:"-"`
-	XXX_sizecache          int32                              `json:"-"`
+	// Indicates that the route has a hedge policy. Note that if this is set,
+	// it'll take precedence over the virtual host level hedge policy entirely
+	// (e.g.: policies are not merged, most internal one becomes the enforced policy).
+	HedgePolicy          *HedgePolicy `protobuf:"bytes,27,opt,name=hedge_policy,json=hedgePolicy,proto3" json:"hedge_policy,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
 func (m *RouteAction) Reset()         { *m = RouteAction{} }
 func (m *RouteAction) String() string { return proto.CompactTextString(m) }
 func (*RouteAction) ProtoMessage()    {}
 func (*RouteAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{5}
+	return fileDescriptor_7dc2895fb75d9d41, []int{6}
 }
 
 func (m *RouteAction) XXX_Unmarshal(b []byte) error {
@@ -1332,9 +1800,40 @@ func (*RouteAction) XXX_OneofWrappers() []interface{} {
 	}
 }
 
+// The router is capable of shadowing traffic from one cluster to another. The current
+// implementation is "fire and forget," meaning Envoy will not wait for the shadow cluster to
+// respond before returning the response from the primary cluster. All normal statistics are
+// collected for the shadow cluster making this feature useful for testing.
+//
+// During shadowing, the host/authority header is altered such that *-shadow* is appended. This is
+// useful for logging. For example, *cluster1* becomes *cluster1-shadow*.
 type RouteAction_RequestMirrorPolicy struct {
-	Cluster              string                         `protobuf:"bytes,1,opt,name=cluster,proto3" json:"cluster,omitempty"`
-	RuntimeKey           string                         `protobuf:"bytes,2,opt,name=runtime_key,json=runtimeKey,proto3" json:"runtime_key,omitempty"` // Deprecated: Do not use.
+	// Specifies the cluster that requests will be mirrored to. The cluster must
+	// exist in the cluster manager configuration.
+	Cluster string `protobuf:"bytes,1,opt,name=cluster,proto3" json:"cluster,omitempty"`
+	// If not specified, all requests to the target cluster will be mirrored. If
+	// specified, Envoy will lookup the runtime key to get the % of requests to
+	// mirror. Valid values are from 0 to 10000, allowing for increments of
+	// 0.01% of requests to be mirrored. If the runtime key is specified in the
+	// configuration but not present in runtime, 0 is the default and thus 0% of
+	// requests will be mirrored.
+	//
+	// .. attention::
+	//
+	//   **This field is deprecated**. Set the
+	//   :ref:`runtime_fraction
+	//   <envoy_api_field_route.RouteAction.RequestMirrorPolicy.runtime_fraction>` field instead.
+	RuntimeKey string `protobuf:"bytes,2,opt,name=runtime_key,json=runtimeKey,proto3" json:"runtime_key,omitempty"` // Deprecated: Do not use.
+	// If both :ref:`runtime_key
+	// <envoy_api_field_route.RouteAction.RequestMirrorPolicy.runtime_key>` and this field are not
+	// specified, all requests to the target cluster will be mirrored.
+	//
+	// If specified, this field takes precedence over the `runtime_key` field and requests must also
+	// fall under the percentage of matches indicated by this field.
+	//
+	// For some fraction N/D, a random number in the range [0,D) is selected. If the
+	// number is <= the value of the numerator N, or if the key is not present, the default
+	// value, the request will be mirrored.
 	RuntimeFraction      *core.RuntimeFractionalPercent `protobuf:"bytes,3,opt,name=runtime_fraction,json=runtimeFraction,proto3" json:"runtime_fraction,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                       `json:"-"`
 	XXX_unrecognized     []byte                         `json:"-"`
@@ -1345,7 +1844,7 @@ func (m *RouteAction_RequestMirrorPolicy) Reset()         { *m = RouteAction_Req
 func (m *RouteAction_RequestMirrorPolicy) String() string { return proto.CompactTextString(m) }
 func (*RouteAction_RequestMirrorPolicy) ProtoMessage()    {}
 func (*RouteAction_RequestMirrorPolicy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{5, 0}
+	return fileDescriptor_7dc2895fb75d9d41, []int{6, 0}
 }
 
 func (m *RouteAction_RequestMirrorPolicy) XXX_Unmarshal(b []byte) error {
@@ -1388,23 +1887,44 @@ func (m *RouteAction_RequestMirrorPolicy) GetRuntimeFraction() *core.RuntimeFrac
 	return nil
 }
 
+// Specifies the route's hashing policy if the upstream cluster uses a hashing :ref:`load balancer
+// <arch_overview_load_balancing_types>`.
 type RouteAction_HashPolicy struct {
 	// Types that are valid to be assigned to PolicySpecifier:
 	//	*RouteAction_HashPolicy_Header_
 	//	*RouteAction_HashPolicy_Cookie_
 	//	*RouteAction_HashPolicy_ConnectionProperties_
-	PolicySpecifier      isRouteAction_HashPolicy_PolicySpecifier `protobuf_oneof:"policy_specifier"`
-	Terminal             bool                                     `protobuf:"varint,4,opt,name=terminal,proto3" json:"terminal,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                                 `json:"-"`
-	XXX_unrecognized     []byte                                   `json:"-"`
-	XXX_sizecache        int32                                    `json:"-"`
+	PolicySpecifier isRouteAction_HashPolicy_PolicySpecifier `protobuf_oneof:"policy_specifier"`
+	// The flag that short-circuits the hash computing. This field provides a
+	// 'fallback' style of configuration: "if a terminal policy doesn't work,
+	// fallback to rest of the policy list", it saves time when the terminal
+	// policy works.
+	//
+	// If true, and there is already a hash computed, ignore rest of the
+	// list of hash polices.
+	// For example, if the following hash methods are configured:
+	//
+	//  ========= ========
+	//  specifier terminal
+	//  ========= ========
+	//  Header A  true
+	//  Header B  false
+	//  Header C  false
+	//  ========= ========
+	//
+	// The generateHash process ends if policy "header A" generates a hash, as
+	// it's a terminal policy.
+	Terminal             bool     `protobuf:"varint,4,opt,name=terminal,proto3" json:"terminal,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *RouteAction_HashPolicy) Reset()         { *m = RouteAction_HashPolicy{} }
 func (m *RouteAction_HashPolicy) String() string { return proto.CompactTextString(m) }
 func (*RouteAction_HashPolicy) ProtoMessage()    {}
 func (*RouteAction_HashPolicy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{5, 1}
+	return fileDescriptor_7dc2895fb75d9d41, []int{6, 1}
 }
 
 func (m *RouteAction_HashPolicy) XXX_Unmarshal(b []byte) error {
@@ -1492,6 +2012,8 @@ func (*RouteAction_HashPolicy) XXX_OneofWrappers() []interface{} {
 }
 
 type RouteAction_HashPolicy_Header struct {
+	// The name of the request header that will be used to obtain the hash
+	// key. If the request header is not present, no hash will be produced.
 	HeaderName           string   `protobuf:"bytes,1,opt,name=header_name,json=headerName,proto3" json:"header_name,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -1502,7 +2024,7 @@ func (m *RouteAction_HashPolicy_Header) Reset()         { *m = RouteAction_HashP
 func (m *RouteAction_HashPolicy_Header) String() string { return proto.CompactTextString(m) }
 func (*RouteAction_HashPolicy_Header) ProtoMessage()    {}
 func (*RouteAction_HashPolicy_Header) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{5, 1, 0}
+	return fileDescriptor_7dc2895fb75d9d41, []int{6, 1, 0}
 }
 
 func (m *RouteAction_HashPolicy_Header) XXX_Unmarshal(b []byte) error {
@@ -1530,20 +2052,42 @@ func (m *RouteAction_HashPolicy_Header) GetHeaderName() string {
 	return ""
 }
 
+// Envoy supports two types of cookie affinity:
+//
+// 1. Passive. Envoy takes a cookie that's present in the cookies header and
+//    hashes on its value.
+//
+// 2. Generated. Envoy generates and sets a cookie with an expiration (TTL)
+//    on the first request from the client in its response to the client,
+//    based on the endpoint the request gets sent to. The client then
+//    presents this on the next and all subsequent requests. The hash of
+//    this is sufficient to ensure these requests get sent to the same
+//    endpoint. The cookie is generated by hashing the source and
+//    destination ports and addresses so that multiple independent HTTP2
+//    streams on the same connection will independently receive the same
+//    cookie, even if they arrive at the Envoy simultaneously.
 type RouteAction_HashPolicy_Cookie struct {
-	Name                 string             `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Ttl                  *duration.Duration `protobuf:"bytes,2,opt,name=ttl,proto3" json:"ttl,omitempty"`
-	Path                 string             `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
-	XXX_unrecognized     []byte             `json:"-"`
-	XXX_sizecache        int32              `json:"-"`
+	// The name of the cookie that will be used to obtain the hash key. If the
+	// cookie is not present and ttl below is not set, no hash will be
+	// produced.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// If specified, a cookie with the TTL will be generated if the cookie is
+	// not present. If the TTL is present and zero, the generated cookie will
+	// be a session cookie.
+	Ttl *duration.Duration `protobuf:"bytes,2,opt,name=ttl,proto3" json:"ttl,omitempty"`
+	// The name of the path for the cookie. If no path is specified here, no path
+	// will be set for the cookie.
+	Path                 string   `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *RouteAction_HashPolicy_Cookie) Reset()         { *m = RouteAction_HashPolicy_Cookie{} }
 func (m *RouteAction_HashPolicy_Cookie) String() string { return proto.CompactTextString(m) }
 func (*RouteAction_HashPolicy_Cookie) ProtoMessage()    {}
 func (*RouteAction_HashPolicy_Cookie) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{5, 1, 1}
+	return fileDescriptor_7dc2895fb75d9d41, []int{6, 1, 1}
 }
 
 func (m *RouteAction_HashPolicy_Cookie) XXX_Unmarshal(b []byte) error {
@@ -1586,6 +2130,7 @@ func (m *RouteAction_HashPolicy_Cookie) GetPath() string {
 }
 
 type RouteAction_HashPolicy_ConnectionProperties struct {
+	// Hash on source IP address.
 	SourceIp             bool     `protobuf:"varint,1,opt,name=source_ip,json=sourceIp,proto3" json:"source_ip,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -1600,7 +2145,7 @@ func (m *RouteAction_HashPolicy_ConnectionProperties) String() string {
 }
 func (*RouteAction_HashPolicy_ConnectionProperties) ProtoMessage() {}
 func (*RouteAction_HashPolicy_ConnectionProperties) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{5, 1, 2}
+	return fileDescriptor_7dc2895fb75d9d41, []int{6, 1, 2}
 }
 
 func (m *RouteAction_HashPolicy_ConnectionProperties) XXX_Unmarshal(b []byte) error {
@@ -1628,8 +2173,18 @@ func (m *RouteAction_HashPolicy_ConnectionProperties) GetSourceIp() bool {
 	return false
 }
 
+// Allows enabling and disabling upgrades on a per-route basis.
+// This overrides any enabled/disabled upgrade filter chain specified in the
+// HttpConnectionManager
+// :ref:upgrade_configs`
+// <envoy_api_field_config.filter.network.http_connection_manager.v2.HttpConnectionManager.upgrade_configs>`
+// but does not affect any custom filter chain specified there.
 type RouteAction_UpgradeConfig struct {
-	UpgradeType          string              `protobuf:"bytes,1,opt,name=upgrade_type,json=upgradeType,proto3" json:"upgrade_type,omitempty"`
+	// The case-insensitive name of this upgrade, e.g. "websocket".
+	// For each upgrade type present in upgrade_configs, requests with
+	// Upgrade: [upgrade_type] will be proxied upstream.
+	UpgradeType string `protobuf:"bytes,1,opt,name=upgrade_type,json=upgradeType,proto3" json:"upgrade_type,omitempty"`
+	// Determines if upgrades are available on this route. Defaults to true.
 	Enabled              *wrappers.BoolValue `protobuf:"bytes,2,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
 	XXX_unrecognized     []byte              `json:"-"`
@@ -1640,7 +2195,7 @@ func (m *RouteAction_UpgradeConfig) Reset()         { *m = RouteAction_UpgradeCo
 func (m *RouteAction_UpgradeConfig) String() string { return proto.CompactTextString(m) }
 func (*RouteAction_UpgradeConfig) ProtoMessage()    {}
 func (*RouteAction_UpgradeConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{5, 2}
+	return fileDescriptor_7dc2895fb75d9d41, []int{6, 2}
 }
 
 func (m *RouteAction_UpgradeConfig) XXX_Unmarshal(b []byte) error {
@@ -1675,27 +2230,66 @@ func (m *RouteAction_UpgradeConfig) GetEnabled() *wrappers.BoolValue {
 	return nil
 }
 
+// HTTP retry :ref:`architecture overview <arch_overview_http_routing_retry>`.
+// [#next-free-field: 11]
 type RetryPolicy struct {
-	RetryOn                       string                            `protobuf:"bytes,1,opt,name=retry_on,json=retryOn,proto3" json:"retry_on,omitempty"`
-	NumRetries                    *wrappers.UInt32Value             `protobuf:"bytes,2,opt,name=num_retries,json=numRetries,proto3" json:"num_retries,omitempty"`
-	PerTryTimeout                 *duration.Duration                `protobuf:"bytes,3,opt,name=per_try_timeout,json=perTryTimeout,proto3" json:"per_try_timeout,omitempty"`
-	RetryPriority                 *RetryPolicy_RetryPriority        `protobuf:"bytes,4,opt,name=retry_priority,json=retryPriority,proto3" json:"retry_priority,omitempty"`
-	RetryHostPredicate            []*RetryPolicy_RetryHostPredicate `protobuf:"bytes,5,rep,name=retry_host_predicate,json=retryHostPredicate,proto3" json:"retry_host_predicate,omitempty"`
-	HostSelectionRetryMaxAttempts int64                             `protobuf:"varint,6,opt,name=host_selection_retry_max_attempts,json=hostSelectionRetryMaxAttempts,proto3" json:"host_selection_retry_max_attempts,omitempty"`
-	RetriableStatusCodes          []uint32                          `protobuf:"varint,7,rep,packed,name=retriable_status_codes,json=retriableStatusCodes,proto3" json:"retriable_status_codes,omitempty"`
-	RetryBackOff                  *RetryPolicy_RetryBackOff         `protobuf:"bytes,8,opt,name=retry_back_off,json=retryBackOff,proto3" json:"retry_back_off,omitempty"`
-	RetriableHeaders              []*HeaderMatcher                  `protobuf:"bytes,9,rep,name=retriable_headers,json=retriableHeaders,proto3" json:"retriable_headers,omitempty"`
-	RetriableRequestHeaders       []*HeaderMatcher                  `protobuf:"bytes,10,rep,name=retriable_request_headers,json=retriableRequestHeaders,proto3" json:"retriable_request_headers,omitempty"`
-	XXX_NoUnkeyedLiteral          struct{}                          `json:"-"`
-	XXX_unrecognized              []byte                            `json:"-"`
-	XXX_sizecache                 int32                             `json:"-"`
+	// Specifies the conditions under which retry takes place. These are the same
+	// conditions documented for :ref:`config_http_filters_router_x-envoy-retry-on` and
+	// :ref:`config_http_filters_router_x-envoy-retry-grpc-on`.
+	RetryOn string `protobuf:"bytes,1,opt,name=retry_on,json=retryOn,proto3" json:"retry_on,omitempty"`
+	// Specifies the allowed number of retries. This parameter is optional and
+	// defaults to 1. These are the same conditions documented for
+	// :ref:`config_http_filters_router_x-envoy-max-retries`.
+	NumRetries *wrappers.UInt32Value `protobuf:"bytes,2,opt,name=num_retries,json=numRetries,proto3" json:"num_retries,omitempty"`
+	// Specifies a non-zero upstream timeout per retry attempt. This parameter is optional. The
+	// same conditions documented for
+	// :ref:`config_http_filters_router_x-envoy-upstream-rq-per-try-timeout-ms` apply.
+	//
+	// .. note::
+	//
+	//   If left unspecified, Envoy will use the global
+	//   :ref:`route timeout <envoy_api_field_route.RouteAction.timeout>` for the request.
+	//   Consequently, when using a :ref:`5xx <config_http_filters_router_x-envoy-retry-on>` based
+	//   retry policy, a request that times out will not be retried as the total timeout budget
+	//   would have been exhausted.
+	PerTryTimeout *duration.Duration `protobuf:"bytes,3,opt,name=per_try_timeout,json=perTryTimeout,proto3" json:"per_try_timeout,omitempty"`
+	// Specifies an implementation of a RetryPriority which is used to determine the
+	// distribution of load across priorities used for retries. Refer to
+	// :ref:`retry plugin configuration <arch_overview_http_retry_plugins>` for more details.
+	RetryPriority *RetryPolicy_RetryPriority `protobuf:"bytes,4,opt,name=retry_priority,json=retryPriority,proto3" json:"retry_priority,omitempty"`
+	// Specifies a collection of RetryHostPredicates that will be consulted when selecting a host
+	// for retries. If any of the predicates reject the host, host selection will be reattempted.
+	// Refer to :ref:`retry plugin configuration <arch_overview_http_retry_plugins>` for more
+	// details.
+	RetryHostPredicate []*RetryPolicy_RetryHostPredicate `protobuf:"bytes,5,rep,name=retry_host_predicate,json=retryHostPredicate,proto3" json:"retry_host_predicate,omitempty"`
+	// The maximum number of times host selection will be reattempted before giving up, at which
+	// point the host that was last selected will be routed to. If unspecified, this will default to
+	// retrying once.
+	HostSelectionRetryMaxAttempts int64 `protobuf:"varint,6,opt,name=host_selection_retry_max_attempts,json=hostSelectionRetryMaxAttempts,proto3" json:"host_selection_retry_max_attempts,omitempty"`
+	// HTTP status codes that should trigger a retry in addition to those specified by retry_on.
+	RetriableStatusCodes []uint32 `protobuf:"varint,7,rep,packed,name=retriable_status_codes,json=retriableStatusCodes,proto3" json:"retriable_status_codes,omitempty"`
+	// Specifies parameters that control retry back off. This parameter is optional, in which case the
+	// default base interval is 25 milliseconds or, if set, the current value of the
+	// `upstream.base_retry_backoff_ms` runtime parameter. The default maximum interval is 10 times
+	// the base interval. The documentation for :ref:`config_http_filters_router_x-envoy-max-retries`
+	// describes Envoy's back-off algorithm.
+	RetryBackOff *RetryPolicy_RetryBackOff `protobuf:"bytes,8,opt,name=retry_back_off,json=retryBackOff,proto3" json:"retry_back_off,omitempty"`
+	// HTTP response headers that trigger a retry if present in the response. A retry will be
+	// triggered if any of the header matches match the upstream response headers.
+	// The field is only consulted if 'retriable-headers' retry policy is active.
+	RetriableHeaders []*HeaderMatcher `protobuf:"bytes,9,rep,name=retriable_headers,json=retriableHeaders,proto3" json:"retriable_headers,omitempty"`
+	// HTTP headers which must be present in the request for retries to be attempted.
+	RetriableRequestHeaders []*HeaderMatcher `protobuf:"bytes,10,rep,name=retriable_request_headers,json=retriableRequestHeaders,proto3" json:"retriable_request_headers,omitempty"`
+	XXX_NoUnkeyedLiteral    struct{}         `json:"-"`
+	XXX_unrecognized        []byte           `json:"-"`
+	XXX_sizecache           int32            `json:"-"`
 }
 
 func (m *RetryPolicy) Reset()         { *m = RetryPolicy{} }
 func (m *RetryPolicy) String() string { return proto.CompactTextString(m) }
 func (*RetryPolicy) ProtoMessage()    {}
 func (*RetryPolicy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{6}
+	return fileDescriptor_7dc2895fb75d9d41, []int{7}
 }
 
 func (m *RetryPolicy) XXX_Unmarshal(b []byte) error {
@@ -1801,7 +2395,7 @@ func (m *RetryPolicy_RetryPriority) Reset()         { *m = RetryPolicy_RetryPrio
 func (m *RetryPolicy_RetryPriority) String() string { return proto.CompactTextString(m) }
 func (*RetryPolicy_RetryPriority) ProtoMessage()    {}
 func (*RetryPolicy_RetryPriority) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{6, 0}
+	return fileDescriptor_7dc2895fb75d9d41, []int{7, 0}
 }
 
 func (m *RetryPolicy_RetryPriority) XXX_Unmarshal(b []byte) error {
@@ -1890,7 +2484,7 @@ func (m *RetryPolicy_RetryHostPredicate) Reset()         { *m = RetryPolicy_Retr
 func (m *RetryPolicy_RetryHostPredicate) String() string { return proto.CompactTextString(m) }
 func (*RetryPolicy_RetryHostPredicate) ProtoMessage()    {}
 func (*RetryPolicy_RetryHostPredicate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{6, 1}
+	return fileDescriptor_7dc2895fb75d9d41, []int{7, 1}
 }
 
 func (m *RetryPolicy_RetryHostPredicate) XXX_Unmarshal(b []byte) error {
@@ -1965,7 +2559,15 @@ func (*RetryPolicy_RetryHostPredicate) XXX_OneofWrappers() []interface{} {
 }
 
 type RetryPolicy_RetryBackOff struct {
-	BaseInterval         *duration.Duration `protobuf:"bytes,1,opt,name=base_interval,json=baseInterval,proto3" json:"base_interval,omitempty"`
+	// Specifies the base interval between retries. This parameter is required and must be greater
+	// than zero. Values less than 1 ms are rounded up to 1 ms.
+	// See :ref:`config_http_filters_router_x-envoy-max-retries` for a discussion of Envoy's
+	// back-off algorithm.
+	BaseInterval *duration.Duration `protobuf:"bytes,1,opt,name=base_interval,json=baseInterval,proto3" json:"base_interval,omitempty"`
+	// Specifies the maximum interval between retries. This parameter is optional, but must be
+	// greater than or equal to the `base_interval` if set. The default is 10 times the
+	// `base_interval`. See :ref:`config_http_filters_router_x-envoy-max-retries` for a discussion
+	// of Envoy's back-off algorithm.
 	MaxInterval          *duration.Duration `protobuf:"bytes,2,opt,name=max_interval,json=maxInterval,proto3" json:"max_interval,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
 	XXX_unrecognized     []byte             `json:"-"`
@@ -1976,7 +2578,7 @@ func (m *RetryPolicy_RetryBackOff) Reset()         { *m = RetryPolicy_RetryBackO
 func (m *RetryPolicy_RetryBackOff) String() string { return proto.CompactTextString(m) }
 func (*RetryPolicy_RetryBackOff) ProtoMessage()    {}
 func (*RetryPolicy_RetryBackOff) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{6, 2}
+	return fileDescriptor_7dc2895fb75d9d41, []int{7, 2}
 }
 
 func (m *RetryPolicy_RetryBackOff) XXX_Unmarshal(b []byte) error {
@@ -2011,20 +2613,37 @@ func (m *RetryPolicy_RetryBackOff) GetMaxInterval() *duration.Duration {
 	return nil
 }
 
+// HTTP request hedging :ref:`architecture overview <arch_overview_http_routing_hedging>`.
 type HedgePolicy struct {
-	InitialRequests         *wrappers.UInt32Value    `protobuf:"bytes,1,opt,name=initial_requests,json=initialRequests,proto3" json:"initial_requests,omitempty"`
+	// Specifies the number of initial requests that should be sent upstream.
+	// Must be at least 1.
+	// Defaults to 1.
+	// [#not-implemented-hide:]
+	InitialRequests *wrappers.UInt32Value `protobuf:"bytes,1,opt,name=initial_requests,json=initialRequests,proto3" json:"initial_requests,omitempty"`
+	// Specifies a probability that an additional upstream request should be sent
+	// on top of what is specified by initial_requests.
+	// Defaults to 0.
+	// [#not-implemented-hide:]
 	AdditionalRequestChance *_type.FractionalPercent `protobuf:"bytes,2,opt,name=additional_request_chance,json=additionalRequestChance,proto3" json:"additional_request_chance,omitempty"`
-	HedgeOnPerTryTimeout    bool                     `protobuf:"varint,3,opt,name=hedge_on_per_try_timeout,json=hedgeOnPerTryTimeout,proto3" json:"hedge_on_per_try_timeout,omitempty"`
-	XXX_NoUnkeyedLiteral    struct{}                 `json:"-"`
-	XXX_unrecognized        []byte                   `json:"-"`
-	XXX_sizecache           int32                    `json:"-"`
+	// Indicates that a hedged request should be sent when the per-try timeout
+	// is hit. This will only occur if the retry policy also indicates that a
+	// timed out request should be retried.
+	// Once a timed out request is retried due to per try timeout, the router
+	// filter will ensure that it is not retried again even if the returned
+	// response headers would otherwise be retried according the specified
+	// :ref:`RetryPolicy <envoy_api_msg_route.RetryPolicy>`.
+	// Defaults to false.
+	HedgeOnPerTryTimeout bool     `protobuf:"varint,3,opt,name=hedge_on_per_try_timeout,json=hedgeOnPerTryTimeout,proto3" json:"hedge_on_per_try_timeout,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *HedgePolicy) Reset()         { *m = HedgePolicy{} }
 func (m *HedgePolicy) String() string { return proto.CompactTextString(m) }
 func (*HedgePolicy) ProtoMessage()    {}
 func (*HedgePolicy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{7}
+	return fileDescriptor_7dc2895fb75d9d41, []int{8}
 }
 
 func (m *HedgePolicy) XXX_Unmarshal(b []byte) error {
@@ -2066,29 +2685,42 @@ func (m *HedgePolicy) GetHedgeOnPerTryTimeout() bool {
 	return false
 }
 
+// [#next-free-field: 9]
 type RedirectAction struct {
+	// When the scheme redirection take place, the following rules apply:
+	//  1. If the source URI scheme is `http` and the port is explicitly
+	//     set to `:80`, the port will be removed after the redirection
+	//  2. If the source URI scheme is `https` and the port is explicitly
+	//     set to `:443`, the port will be removed after the redirection
+	//
 	// Types that are valid to be assigned to SchemeRewriteSpecifier:
 	//	*RedirectAction_HttpsRedirect
 	//	*RedirectAction_SchemeRedirect
 	SchemeRewriteSpecifier isRedirectAction_SchemeRewriteSpecifier `protobuf_oneof:"scheme_rewrite_specifier"`
-	HostRedirect           string                                  `protobuf:"bytes,1,opt,name=host_redirect,json=hostRedirect,proto3" json:"host_redirect,omitempty"`
-	PortRedirect           uint32                                  `protobuf:"varint,8,opt,name=port_redirect,json=portRedirect,proto3" json:"port_redirect,omitempty"`
+	// The host portion of the URL will be swapped with this value.
+	HostRedirect string `protobuf:"bytes,1,opt,name=host_redirect,json=hostRedirect,proto3" json:"host_redirect,omitempty"`
+	// The port value of the URL will be swapped with this value.
+	PortRedirect uint32 `protobuf:"varint,8,opt,name=port_redirect,json=portRedirect,proto3" json:"port_redirect,omitempty"`
 	// Types that are valid to be assigned to PathRewriteSpecifier:
 	//	*RedirectAction_PathRedirect
 	//	*RedirectAction_PrefixRewrite
 	PathRewriteSpecifier isRedirectAction_PathRewriteSpecifier `protobuf_oneof:"path_rewrite_specifier"`
-	ResponseCode         RedirectAction_RedirectResponseCode   `protobuf:"varint,3,opt,name=response_code,json=responseCode,proto3,enum=envoy.api.v2.route.RedirectAction_RedirectResponseCode" json:"response_code,omitempty"`
-	StripQuery           bool                                  `protobuf:"varint,6,opt,name=strip_query,json=stripQuery,proto3" json:"strip_query,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                              `json:"-"`
-	XXX_unrecognized     []byte                                `json:"-"`
-	XXX_sizecache        int32                                 `json:"-"`
+	// The HTTP status code to use in the redirect response. The default response
+	// code is MOVED_PERMANENTLY (301).
+	ResponseCode RedirectAction_RedirectResponseCode `protobuf:"varint,3,opt,name=response_code,json=responseCode,proto3,enum=envoy.api.v2.route.RedirectAction_RedirectResponseCode" json:"response_code,omitempty"`
+	// Indicates that during redirection, the query portion of the URL will
+	// be removed. Default value is false.
+	StripQuery           bool     `protobuf:"varint,6,opt,name=strip_query,json=stripQuery,proto3" json:"strip_query,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *RedirectAction) Reset()         { *m = RedirectAction{} }
 func (m *RedirectAction) String() string { return proto.CompactTextString(m) }
 func (*RedirectAction) ProtoMessage()    {}
 func (*RedirectAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{8}
+	return fileDescriptor_7dc2895fb75d9d41, []int{9}
 }
 
 func (m *RedirectAction) XXX_Unmarshal(b []byte) error {
@@ -2222,7 +2854,16 @@ func (*RedirectAction) XXX_OneofWrappers() []interface{} {
 }
 
 type DirectResponseAction struct {
-	Status               uint32           `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
+	// Specifies the HTTP response status to be returned.
+	Status uint32 `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
+	// Specifies the content of the response body. If this setting is omitted,
+	// no body is included in the generated response.
+	//
+	// .. note::
+	//
+	//   Headers can be specified using *response_headers_to_add* in the enclosing
+	//   :ref:`envoy_api_msg_route.Route`, :ref:`envoy_api_msg_RouteConfiguration` or
+	//   :ref:`envoy_api_msg_route.VirtualHost`.
 	Body                 *core.DataSource `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
@@ -2233,7 +2874,7 @@ func (m *DirectResponseAction) Reset()         { *m = DirectResponseAction{} }
 func (m *DirectResponseAction) String() string { return proto.CompactTextString(m) }
 func (*DirectResponseAction) ProtoMessage()    {}
 func (*DirectResponseAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{9}
+	return fileDescriptor_7dc2895fb75d9d41, []int{10}
 }
 
 func (m *DirectResponseAction) XXX_Unmarshal(b []byte) error {
@@ -2269,6 +2910,14 @@ func (m *DirectResponseAction) GetBody() *core.DataSource {
 }
 
 type Decorator struct {
+	// The operation name associated with the request matched to this route. If tracing is
+	// enabled, this information will be used as the span name reported for this request.
+	//
+	// .. note::
+	//
+	//   For ingress (inbound) requests, or egress (outbound) responses, this value may be overridden
+	//   by the :ref:`x-envoy-decorator-operation
+	//   <config_http_filters_router_x-envoy-decorator-operation>` header.
 	Operation            string   `protobuf:"bytes,1,opt,name=operation,proto3" json:"operation,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2279,7 +2928,7 @@ func (m *Decorator) Reset()         { *m = Decorator{} }
 func (m *Decorator) String() string { return proto.CompactTextString(m) }
 func (*Decorator) ProtoMessage()    {}
 func (*Decorator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{10}
+	return fileDescriptor_7dc2895fb75d9d41, []int{11}
 }
 
 func (m *Decorator) XXX_Unmarshal(b []byte) error {
@@ -2308,8 +2957,27 @@ func (m *Decorator) GetOperation() string {
 }
 
 type Tracing struct {
-	ClientSampling       *_type.FractionalPercent `protobuf:"bytes,1,opt,name=client_sampling,json=clientSampling,proto3" json:"client_sampling,omitempty"`
-	RandomSampling       *_type.FractionalPercent `protobuf:"bytes,2,opt,name=random_sampling,json=randomSampling,proto3" json:"random_sampling,omitempty"`
+	// Target percentage of requests managed by this HTTP connection manager that will be force
+	// traced if the :ref:`x-client-trace-id <config_http_conn_man_headers_x-client-trace-id>`
+	// header is set. This field is a direct analog for the runtime variable
+	// 'tracing.client_sampling' in the :ref:`HTTP Connection Manager
+	// <config_http_conn_man_runtime>`.
+	// Default: 100%
+	ClientSampling *_type.FractionalPercent `protobuf:"bytes,1,opt,name=client_sampling,json=clientSampling,proto3" json:"client_sampling,omitempty"`
+	// Target percentage of requests managed by this HTTP connection manager that will be randomly
+	// selected for trace generation, if not requested by the client or not forced. This field is
+	// a direct analog for the runtime variable 'tracing.random_sampling' in the
+	// :ref:`HTTP Connection Manager <config_http_conn_man_runtime>`.
+	// Default: 100%
+	RandomSampling *_type.FractionalPercent `protobuf:"bytes,2,opt,name=random_sampling,json=randomSampling,proto3" json:"random_sampling,omitempty"`
+	// Target percentage of requests managed by this HTTP connection manager that will be traced
+	// after all other sampling checks have been applied (client-directed, force tracing, random
+	// sampling). This field functions as an upper limit on the total configured sampling rate. For
+	// instance, setting client_sampling to 100% but overall_sampling to 1% will result in only 1%
+	// of client requests with the appropriate headers to be force traced. This field is a direct
+	// analog for the runtime variable 'tracing.global_enabled' in the
+	// :ref:`HTTP Connection Manager <config_http_conn_man_runtime>`.
+	// Default: 100%
 	OverallSampling      *_type.FractionalPercent `protobuf:"bytes,3,opt,name=overall_sampling,json=overallSampling,proto3" json:"overall_sampling,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
 	XXX_unrecognized     []byte                   `json:"-"`
@@ -2320,7 +2988,7 @@ func (m *Tracing) Reset()         { *m = Tracing{} }
 func (m *Tracing) String() string { return proto.CompactTextString(m) }
 func (*Tracing) ProtoMessage()    {}
 func (*Tracing) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{11}
+	return fileDescriptor_7dc2895fb75d9d41, []int{12}
 }
 
 func (m *Tracing) XXX_Unmarshal(b []byte) error {
@@ -2362,10 +3030,51 @@ func (m *Tracing) GetOverallSampling() *_type.FractionalPercent {
 	return nil
 }
 
+// A virtual cluster is a way of specifying a regex matching rule against
+// certain important endpoints such that statistics are generated explicitly for
+// the matched requests. The reason this is useful is that when doing
+// prefix/path matching Envoy does not always know what the application
+// considers to be an endpoint. Thus, it’s impossible for Envoy to generically
+// emit per endpoint statistics. However, often systems have highly critical
+// endpoints that they wish to get “perfect” statistics on. Virtual cluster
+// statistics are perfect in the sense that they are emitted on the downstream
+// side such that they include network level failures.
+//
+// Documentation for :ref:`virtual cluster statistics <config_http_filters_router_stats>`.
+//
+// .. note::
+//
+//    Virtual clusters are a useful tool, but we do not recommend setting up a virtual cluster for
+//    every application endpoint. This is both not easily maintainable and as well the matching and
+//    statistics output are not free.
 type VirtualCluster struct {
-	Pattern              string             `protobuf:"bytes,1,opt,name=pattern,proto3" json:"pattern,omitempty"` // Deprecated: Do not use.
-	Headers              []*HeaderMatcher   `protobuf:"bytes,4,rep,name=headers,proto3" json:"headers,omitempty"`
-	Name                 string             `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// Specifies a regex pattern to use for matching requests. The entire path of the request
+	// must match the regex. The regex grammar used is defined `here
+	// <https://en.cppreference.com/w/cpp/regex/ecmascript>`_.
+	//
+	// Examples:
+	//
+	// * The regex ``/rides/\d+`` matches the path */rides/0*
+	// * The regex ``/rides/\d+`` matches the path */rides/123*
+	// * The regex ``/rides/\d+`` does not match the path */rides/123/456*
+	//
+	// .. attention::
+	//   This field has been deprecated in favor of `headers` as it is not safe for use with
+	//   untrusted input in all cases.
+	Pattern string `protobuf:"bytes,1,opt,name=pattern,proto3" json:"pattern,omitempty"` // Deprecated: Do not use.
+	// Specifies a list of header matchers to use for matching requests. Each specified header must
+	// match. The pseudo-headers `:path` and `:method` can be used to match the request path and
+	// method, respectively.
+	Headers []*HeaderMatcher `protobuf:"bytes,4,rep,name=headers,proto3" json:"headers,omitempty"`
+	// Specifies the name of the virtual cluster. The virtual cluster name as well
+	// as the virtual host name are used when emitting statistics. The statistics are emitted by the
+	// router filter and are documented :ref:`here <config_http_filters_router_stats>`.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// Optionally specifies the HTTP method to match on. For example GET, PUT,
+	// etc.
+	//
+	// .. attention::
+	//   This field has been deprecated in favor of `headers`.
 	Method               core.RequestMethod `protobuf:"varint,3,opt,name=method,proto3,enum=envoy.api.v2.core.RequestMethod" json:"method,omitempty"` // Deprecated: Do not use.
 	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
 	XXX_unrecognized     []byte             `json:"-"`
@@ -2376,7 +3085,7 @@ func (m *VirtualCluster) Reset()         { *m = VirtualCluster{} }
 func (m *VirtualCluster) String() string { return proto.CompactTextString(m) }
 func (*VirtualCluster) ProtoMessage()    {}
 func (*VirtualCluster) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{12}
+	return fileDescriptor_7dc2895fb75d9d41, []int{13}
 }
 
 func (m *VirtualCluster) XXX_Unmarshal(b []byte) error {
@@ -2427,20 +3136,35 @@ func (m *VirtualCluster) GetMethod() core.RequestMethod {
 	return core.RequestMethod_METHOD_UNSPECIFIED
 }
 
+// Global rate limiting :ref:`architecture overview <arch_overview_rate_limit>`.
 type RateLimit struct {
-	Stage                *wrappers.UInt32Value `protobuf:"bytes,1,opt,name=stage,proto3" json:"stage,omitempty"`
-	DisableKey           string                `protobuf:"bytes,2,opt,name=disable_key,json=disableKey,proto3" json:"disable_key,omitempty"`
-	Actions              []*RateLimit_Action   `protobuf:"bytes,3,rep,name=actions,proto3" json:"actions,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
-	XXX_unrecognized     []byte                `json:"-"`
-	XXX_sizecache        int32                 `json:"-"`
+	// Refers to the stage set in the filter. The rate limit configuration only
+	// applies to filters with the same stage number. The default stage number is
+	// 0.
+	//
+	// .. note::
+	//
+	//   The filter supports a range of 0 - 10 inclusively for stage numbers.
+	Stage *wrappers.UInt32Value `protobuf:"bytes,1,opt,name=stage,proto3" json:"stage,omitempty"`
+	// The key to be set in runtime to disable this rate limit configuration.
+	DisableKey string `protobuf:"bytes,2,opt,name=disable_key,json=disableKey,proto3" json:"disable_key,omitempty"`
+	// A list of actions that are to be applied for this rate limit configuration.
+	// Order matters as the actions are processed sequentially and the descriptor
+	// is composed by appending descriptor entries in that sequence. If an action
+	// cannot append a descriptor entry, no descriptor is generated for the
+	// configuration. See :ref:`composing actions
+	// <config_http_filters_rate_limit_composing_actions>` for additional documentation.
+	Actions              []*RateLimit_Action `protobuf:"bytes,3,rep,name=actions,proto3" json:"actions,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
 }
 
 func (m *RateLimit) Reset()         { *m = RateLimit{} }
 func (m *RateLimit) String() string { return proto.CompactTextString(m) }
 func (*RateLimit) ProtoMessage()    {}
 func (*RateLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{13}
+	return fileDescriptor_7dc2895fb75d9d41, []int{14}
 }
 
 func (m *RateLimit) XXX_Unmarshal(b []byte) error {
@@ -2482,6 +3206,7 @@ func (m *RateLimit) GetActions() []*RateLimit_Action {
 	return nil
 }
 
+// [#next-free-field: 7]
 type RateLimit_Action struct {
 	// Types that are valid to be assigned to ActionSpecifier:
 	//	*RateLimit_Action_SourceCluster_
@@ -2500,7 +3225,7 @@ func (m *RateLimit_Action) Reset()         { *m = RateLimit_Action{} }
 func (m *RateLimit_Action) String() string { return proto.CompactTextString(m) }
 func (*RateLimit_Action) ProtoMessage()    {}
 func (*RateLimit_Action) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{13, 0}
+	return fileDescriptor_7dc2895fb75d9d41, []int{14, 0}
 }
 
 func (m *RateLimit_Action) XXX_Unmarshal(b []byte) error {
@@ -2622,6 +3347,13 @@ func (*RateLimit_Action) XXX_OneofWrappers() []interface{} {
 	}
 }
 
+// The following descriptor entry is appended to the descriptor:
+//
+// .. code-block:: cpp
+//
+//   ("source_cluster", "<local service cluster>")
+//
+// <local service cluster> is derived from the :option:`--service-cluster` option.
 type RateLimit_Action_SourceCluster struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2632,7 +3364,7 @@ func (m *RateLimit_Action_SourceCluster) Reset()         { *m = RateLimit_Action
 func (m *RateLimit_Action_SourceCluster) String() string { return proto.CompactTextString(m) }
 func (*RateLimit_Action_SourceCluster) ProtoMessage()    {}
 func (*RateLimit_Action_SourceCluster) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{13, 0, 0}
+	return fileDescriptor_7dc2895fb75d9d41, []int{14, 0, 0}
 }
 
 func (m *RateLimit_Action_SourceCluster) XXX_Unmarshal(b []byte) error {
@@ -2653,6 +3385,22 @@ func (m *RateLimit_Action_SourceCluster) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_RateLimit_Action_SourceCluster proto.InternalMessageInfo
 
+// The following descriptor entry is appended to the descriptor:
+//
+// .. code-block:: cpp
+//
+//   ("destination_cluster", "<routed target cluster>")
+//
+// Once a request matches against a route table rule, a routed cluster is determined by one of
+// the following :ref:`route table configuration <envoy_api_msg_RouteConfiguration>`
+// settings:
+//
+// * :ref:`cluster <envoy_api_field_route.RouteAction.cluster>` indicates the upstream cluster
+//   to route to.
+// * :ref:`weighted_clusters <envoy_api_field_route.RouteAction.weighted_clusters>`
+//   chooses a cluster randomly from a set of clusters with attributed weight.
+// * :ref:`cluster_header <envoy_api_field_route.RouteAction.cluster_header>` indicates which
+//   header in the request contains the target cluster.
 type RateLimit_Action_DestinationCluster struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2663,7 +3411,7 @@ func (m *RateLimit_Action_DestinationCluster) Reset()         { *m = RateLimit_A
 func (m *RateLimit_Action_DestinationCluster) String() string { return proto.CompactTextString(m) }
 func (*RateLimit_Action_DestinationCluster) ProtoMessage()    {}
 func (*RateLimit_Action_DestinationCluster) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{13, 0, 1}
+	return fileDescriptor_7dc2895fb75d9d41, []int{14, 0, 1}
 }
 
 func (m *RateLimit_Action_DestinationCluster) XXX_Unmarshal(b []byte) error {
@@ -2684,8 +3432,18 @@ func (m *RateLimit_Action_DestinationCluster) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_RateLimit_Action_DestinationCluster proto.InternalMessageInfo
 
+// The following descriptor entry is appended when a header contains a key that matches the
+// *header_name*:
+//
+// .. code-block:: cpp
+//
+//   ("<descriptor_key>", "<header_value_queried_from_header>")
 type RateLimit_Action_RequestHeaders struct {
-	HeaderName           string   `protobuf:"bytes,1,opt,name=header_name,json=headerName,proto3" json:"header_name,omitempty"`
+	// The header name to be queried from the request headers. The header’s
+	// value is used to populate the value of the descriptor entry for the
+	// descriptor_key.
+	HeaderName string `protobuf:"bytes,1,opt,name=header_name,json=headerName,proto3" json:"header_name,omitempty"`
+	// The key to use in the descriptor entry.
 	DescriptorKey        string   `protobuf:"bytes,2,opt,name=descriptor_key,json=descriptorKey,proto3" json:"descriptor_key,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2696,7 +3454,7 @@ func (m *RateLimit_Action_RequestHeaders) Reset()         { *m = RateLimit_Actio
 func (m *RateLimit_Action_RequestHeaders) String() string { return proto.CompactTextString(m) }
 func (*RateLimit_Action_RequestHeaders) ProtoMessage()    {}
 func (*RateLimit_Action_RequestHeaders) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{13, 0, 2}
+	return fileDescriptor_7dc2895fb75d9d41, []int{14, 0, 2}
 }
 
 func (m *RateLimit_Action_RequestHeaders) XXX_Unmarshal(b []byte) error {
@@ -2731,6 +3489,12 @@ func (m *RateLimit_Action_RequestHeaders) GetDescriptorKey() string {
 	return ""
 }
 
+// The following descriptor entry is appended to the descriptor and is populated using the
+// trusted address from :ref:`x-forwarded-for <config_http_conn_man_headers_x-forwarded-for>`:
+//
+// .. code-block:: cpp
+//
+//   ("remote_address", "<trusted address from x-forwarded-for>")
 type RateLimit_Action_RemoteAddress struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2741,7 +3505,7 @@ func (m *RateLimit_Action_RemoteAddress) Reset()         { *m = RateLimit_Action
 func (m *RateLimit_Action_RemoteAddress) String() string { return proto.CompactTextString(m) }
 func (*RateLimit_Action_RemoteAddress) ProtoMessage()    {}
 func (*RateLimit_Action_RemoteAddress) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{13, 0, 3}
+	return fileDescriptor_7dc2895fb75d9d41, []int{14, 0, 3}
 }
 
 func (m *RateLimit_Action_RemoteAddress) XXX_Unmarshal(b []byte) error {
@@ -2762,7 +3526,13 @@ func (m *RateLimit_Action_RemoteAddress) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_RateLimit_Action_RemoteAddress proto.InternalMessageInfo
 
+// The following descriptor entry is appended to the descriptor:
+//
+// .. code-block:: cpp
+//
+//   ("generic_key", "<descriptor_value>")
 type RateLimit_Action_GenericKey struct {
+	// The value to use in the descriptor entry.
 	DescriptorValue      string   `protobuf:"bytes,1,opt,name=descriptor_value,json=descriptorValue,proto3" json:"descriptor_value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2773,7 +3543,7 @@ func (m *RateLimit_Action_GenericKey) Reset()         { *m = RateLimit_Action_Ge
 func (m *RateLimit_Action_GenericKey) String() string { return proto.CompactTextString(m) }
 func (*RateLimit_Action_GenericKey) ProtoMessage()    {}
 func (*RateLimit_Action_GenericKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{13, 0, 4}
+	return fileDescriptor_7dc2895fb75d9d41, []int{14, 0, 4}
 }
 
 func (m *RateLimit_Action_GenericKey) XXX_Unmarshal(b []byte) error {
@@ -2801,20 +3571,35 @@ func (m *RateLimit_Action_GenericKey) GetDescriptorValue() string {
 	return ""
 }
 
+// The following descriptor entry is appended to the descriptor:
+//
+// .. code-block:: cpp
+//
+//   ("header_match", "<descriptor_value>")
 type RateLimit_Action_HeaderValueMatch struct {
-	DescriptorValue      string              `protobuf:"bytes,1,opt,name=descriptor_value,json=descriptorValue,proto3" json:"descriptor_value,omitempty"`
-	ExpectMatch          *wrappers.BoolValue `protobuf:"bytes,2,opt,name=expect_match,json=expectMatch,proto3" json:"expect_match,omitempty"`
-	Headers              []*HeaderMatcher    `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
+	// The value to use in the descriptor entry.
+	DescriptorValue string `protobuf:"bytes,1,opt,name=descriptor_value,json=descriptorValue,proto3" json:"descriptor_value,omitempty"`
+	// If set to true, the action will append a descriptor entry when the
+	// request matches the headers. If set to false, the action will append a
+	// descriptor entry when the request does not match the headers. The
+	// default value is true.
+	ExpectMatch *wrappers.BoolValue `protobuf:"bytes,2,opt,name=expect_match,json=expectMatch,proto3" json:"expect_match,omitempty"`
+	// Specifies a set of headers that the rate limit action should match
+	// on. The action will check the request’s headers against all the
+	// specified headers in the config. A match will happen if all the
+	// headers in the config are present in the request with the same values
+	// (or based on presence if the value field is not in the config).
+	Headers              []*HeaderMatcher `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
 }
 
 func (m *RateLimit_Action_HeaderValueMatch) Reset()         { *m = RateLimit_Action_HeaderValueMatch{} }
 func (m *RateLimit_Action_HeaderValueMatch) String() string { return proto.CompactTextString(m) }
 func (*RateLimit_Action_HeaderValueMatch) ProtoMessage()    {}
 func (*RateLimit_Action_HeaderValueMatch) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{13, 0, 5}
+	return fileDescriptor_7dc2895fb75d9d41, []int{14, 0, 5}
 }
 
 func (m *RateLimit_Action_HeaderValueMatch) XXX_Unmarshal(b []byte) error {
@@ -2856,8 +3641,36 @@ func (m *RateLimit_Action_HeaderValueMatch) GetHeaders() []*HeaderMatcher {
 	return nil
 }
 
+// .. attention::
+//
+//   Internally, Envoy always uses the HTTP/2 *:authority* header to represent the HTTP/1 *Host*
+//   header. Thus, if attempting to match on *Host*, match on *:authority* instead.
+//
+// .. attention::
+//
+//   To route on HTTP method, use the special HTTP/2 *:method* header. This works for both
+//   HTTP/1 and HTTP/2 as Envoy normalizes headers. E.g.,
+//
+//   .. code-block:: json
+//
+//     {
+//       "name": ":method",
+//       "exact_match": "POST"
+//     }
+//
+// .. attention::
+//   In the absence of any header match specifier, match will default to :ref:`present_match
+//   <envoy_api_field_route.HeaderMatcher.present_match>`. i.e, a request that has the :ref:`name
+//   <envoy_api_field_route.HeaderMatcher.name>` header will match, regardless of the header's
+//   value.
+//
+//  [#next-major-version: HeaderMatcher should be refactored to use StringMatcher.]
+// [#next-free-field: 12]
 type HeaderMatcher struct {
+	// Specifies the name of the header in the request.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Specifies how the header match will be performed to route the request.
+	//
 	// Types that are valid to be assigned to HeaderMatchSpecifier:
 	//	*HeaderMatcher_ExactMatch
 	//	*HeaderMatcher_RegexMatch
@@ -2867,17 +3680,23 @@ type HeaderMatcher struct {
 	//	*HeaderMatcher_PrefixMatch
 	//	*HeaderMatcher_SuffixMatch
 	HeaderMatchSpecifier isHeaderMatcher_HeaderMatchSpecifier `protobuf_oneof:"header_match_specifier"`
-	InvertMatch          bool                                 `protobuf:"varint,8,opt,name=invert_match,json=invertMatch,proto3" json:"invert_match,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                             `json:"-"`
-	XXX_unrecognized     []byte                               `json:"-"`
-	XXX_sizecache        int32                                `json:"-"`
+	// If specified, the match result will be inverted before checking. Defaults to false.
+	//
+	// Examples:
+	//
+	// * The regex ``\d{3}`` does not match the value *1234*, so it will match when inverted.
+	// * The range [-10,0) will match the value -1, so it will not match when inverted.
+	InvertMatch          bool     `protobuf:"varint,8,opt,name=invert_match,json=invertMatch,proto3" json:"invert_match,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *HeaderMatcher) Reset()         { *m = HeaderMatcher{} }
 func (m *HeaderMatcher) String() string { return proto.CompactTextString(m) }
 func (*HeaderMatcher) ProtoMessage()    {}
 func (*HeaderMatcher) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{14}
+	return fileDescriptor_7dc2895fb75d9d41, []int{15}
 }
 
 func (m *HeaderMatcher) XXX_Unmarshal(b []byte) error {
@@ -3028,9 +3847,27 @@ func (*HeaderMatcher) XXX_OneofWrappers() []interface{} {
 	}
 }
 
+// Query parameter matching treats the query string of a request's :path header
+// as an ampersand-separated list of keys and/or key=value elements.
+// [#next-free-field: 7]
 type QueryParameterMatcher struct {
-	Name  string              `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Value string              `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"` // Deprecated: Do not use.
+	// Specifies the name of a key that must be present in the requested
+	// *path*'s query string.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Specifies the value of the key. If the value is absent, a request
+	// that contains the key in its query string will match, whether the
+	// key appears with a value (e.g., "?debug=true") or not (e.g., "?debug")
+	//
+	// ..attention::
+	//   This field is deprecated. Use an `exact` match inside the `string_match` field.
+	Value string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"` // Deprecated: Do not use.
+	// Specifies whether the query parameter value is a regular expression.
+	// Defaults to false. The entire query parameter value (i.e., the part to
+	// the right of the equals sign in "key=value") must match the regex.
+	// E.g., the regex ``\d+$`` will match *123* but not *a123* or *123a*.
+	//
+	// ..attention::
+	//   This field is deprecated. Use a `safe_regex` match inside the `string_match` field.
 	Regex *wrappers.BoolValue `protobuf:"bytes,4,opt,name=regex,proto3" json:"regex,omitempty"` // Deprecated: Do not use.
 	// Types that are valid to be assigned to QueryParameterMatchSpecifier:
 	//	*QueryParameterMatcher_StringMatch
@@ -3045,7 +3882,7 @@ func (m *QueryParameterMatcher) Reset()         { *m = QueryParameterMatcher{} }
 func (m *QueryParameterMatcher) String() string { return proto.CompactTextString(m) }
 func (*QueryParameterMatcher) ProtoMessage()    {}
 func (*QueryParameterMatcher) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7dc2895fb75d9d41, []int{15}
+	return fileDescriptor_7dc2895fb75d9d41, []int{16}
 }
 
 func (m *QueryParameterMatcher) XXX_Unmarshal(b []byte) error {
@@ -3145,6 +3982,7 @@ func init() {
 	proto.RegisterType((*Route)(nil), "envoy.api.v2.route.Route")
 	proto.RegisterMapType((map[string]*_struct.Struct)(nil), "envoy.api.v2.route.Route.PerFilterConfigEntry")
 	proto.RegisterMapType((map[string]*any.Any)(nil), "envoy.api.v2.route.Route.TypedPerFilterConfigEntry")
+	proto.RegisterType((*HttpPreClientFilter)(nil), "envoy.api.v2.route.HttpPreClientFilter")
 	proto.RegisterType((*WeightedCluster)(nil), "envoy.api.v2.route.WeightedCluster")
 	proto.RegisterType((*WeightedCluster_ClusterWeight)(nil), "envoy.api.v2.route.WeightedCluster.ClusterWeight")
 	proto.RegisterMapType((map[string]*_struct.Struct)(nil), "envoy.api.v2.route.WeightedCluster.ClusterWeight.PerFilterConfigEntry")
@@ -3182,261 +4020,267 @@ func init() {
 	proto.RegisterType((*QueryParameterMatcher)(nil), "envoy.api.v2.route.QueryParameterMatcher")
 }
 
-func init() { proto.RegisterFile("envoy/api/v2/route/route.proto", fileDescriptor_7dc2895fb75d9d41) }
+func init() {
+	proto.RegisterFile("envoy/api/v2/route/route.proto", fileDescriptor_7dc2895fb75d9d41)
+}
 
 var fileDescriptor_7dc2895fb75d9d41 = []byte{
-	// 4044 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe4, 0x5b, 0xcb, 0x73, 0x1b, 0xc9,
-	0x79, 0xe7, 0x10, 0x20, 0x1e, 0x1f, 0x1e, 0x1c, 0xb6, 0x28, 0x72, 0x08, 0xad, 0x24, 0x0a, 0x5a,
-	0x95, 0x69, 0x79, 0x17, 0xf4, 0x52, 0xda, 0x5d, 0x6b, 0x65, 0x3b, 0x26, 0x28, 0x68, 0x41, 0x8a,
-	0xaf, 0x34, 0x29, 0x39, 0x1b, 0xc7, 0x9e, 0x8c, 0x30, 0x4d, 0x60, 0x56, 0xc0, 0xcc, 0x6c, 0x4f,
-	0x83, 0x22, 0x6f, 0x2e, 0x5f, 0x52, 0x95, 0x5c, 0x52, 0x7b, 0xc9, 0x29, 0x39, 0x24, 0x39, 0x39,
-	0x95, 0x4b, 0xaa, 0x92, 0xaa, 0xfc, 0x0f, 0x49, 0x2e, 0xb9, 0xe4, 0x9c, 0x5c, 0x72, 0x4e, 0x2e,
-	0x29, 0x9d, 0x52, 0xfd, 0x98, 0x07, 0xc0, 0x21, 0x01, 0x6e, 0xaa, 0xb6, 0xe2, 0xf2, 0x85, 0xc2,
-	0x74, 0xff, 0xbe, 0x5f, 0xf7, 0x74, 0x7f, 0xfd, 0xbd, 0x7a, 0x04, 0x77, 0x88, 0x7b, 0xea, 0x9d,
-	0xaf, 0x5b, 0xbe, 0xb3, 0x7e, 0xba, 0xb1, 0x4e, 0xbd, 0x21, 0x23, 0xf2, 0x6f, 0xc3, 0xa7, 0x1e,
-	0xf3, 0x10, 0x12, 0xfd, 0x0d, 0xcb, 0x77, 0x1a, 0xa7, 0x1b, 0x0d, 0xd1, 0x53, 0x7b, 0x6f, 0x44,
-	0xa6, 0xe3, 0x51, 0xb2, 0xfe, 0xda, 0x0a, 0x94, 0x44, 0x4d, 0x31, 0xb2, 0x73, 0x9f, 0xac, 0x0f,
-	0x2c, 0xd6, 0xe9, 0x11, 0xba, 0x4e, 0x49, 0x97, 0x9c, 0xa9, 0xfe, 0xbb, 0x29, 0xfd, 0x01, 0xa3,
-	0x8e, 0xdb, 0x55, 0x00, 0x23, 0x01, 0xf0, 0x09, 0xed, 0x10, 0x97, 0xa9, 0x9e, 0xa5, 0x44, 0x0f,
-	0xb5, 0xdc, 0x6e, 0x38, 0xe4, 0x4a, 0xd7, 0xf3, 0xba, 0x7d, 0xb2, 0x2e, 0x9e, 0x5e, 0x0f, 0x4f,
-	0xd6, 0x2d, 0xf7, 0x3c, 0x9c, 0xcd, 0x78, 0x97, 0x3d, 0xa4, 0x16, 0x73, 0x3c, 0x57, 0xf5, 0xbf,
-	0x37, 0xde, 0x1f, 0x30, 0x3a, 0xec, 0xb0, 0xcb, 0xa4, 0xdf, 0x52, 0xcb, 0xf7, 0x09, 0x0d, 0x54,
-	0xff, 0xf2, 0xa9, 0xd5, 0x77, 0x6c, 0x8b, 0x91, 0xf5, 0xf0, 0x87, 0xec, 0xa8, 0xff, 0x7b, 0x09,
-	0x4a, 0xaf, 0x1c, 0xca, 0x86, 0x56, 0xbf, 0xed, 0x05, 0x0c, 0xdd, 0x82, 0xac, 0x6b, 0x0d, 0x88,
-	0xa1, 0xad, 0x6a, 0x6b, 0xc5, 0x66, 0xfe, 0x5d, 0x33, 0x4b, 0x67, 0x57, 0x35, 0x2c, 0x1a, 0x51,
-	0x1d, 0xf2, 0xb6, 0x37, 0xb0, 0x1c, 0x37, 0x30, 0x66, 0x57, 0x33, 0x6b, 0xc5, 0x66, 0xe1, 0x5d,
-	0x73, 0xee, 0x6b, 0x6d, 0xb6, 0xa0, 0xe1, 0xb0, 0x03, 0x7d, 0x04, 0x39, 0xb1, 0xf8, 0x81, 0x91,
-	0x59, 0xcd, 0xac, 0x95, 0x36, 0x56, 0x1a, 0x17, 0x37, 0xa6, 0x81, 0xf9, 0x5f, 0xac, 0x80, 0xe8,
-	0x08, 0x4a, 0x94, 0x7c, 0x35, 0x74, 0x28, 0x31, 0x59, 0x3f, 0x30, 0xb2, 0xab, 0xda, 0x5a, 0x75,
-	0x63, 0x23, 0x4d, 0x2e, 0x31, 0xd3, 0xc6, 0x71, 0x3f, 0xc0, 0x52, 0x6a, 0x40, 0x5c, 0x76, 0x7c,
-	0xee, 0x13, 0x0c, 0x8a, 0xe6, 0xb8, 0x1f, 0xa0, 0x3d, 0xd0, 0x4f, 0x25, 0xda, 0xec, 0xf4, 0x87,
-	0x01, 0x23, 0x34, 0x30, 0xe6, 0xc4, 0x8c, 0xea, 0x57, 0x30, 0x6f, 0x49, 0x28, 0x9e, 0x3f, 0x1d,
-	0x79, 0x0e, 0xd0, 0x8f, 0xa1, 0x44, 0x2d, 0x46, 0xcc, 0xbe, 0x33, 0x70, 0x58, 0x60, 0xe4, 0x04,
-	0xd3, 0xed, 0xd4, 0x77, 0xb3, 0x18, 0xd9, 0xe5, 0x28, 0x0c, 0x34, 0xfc, 0x19, 0x20, 0x1b, 0x96,
-	0xf8, 0xe4, 0x48, 0xc0, 0xcc, 0x1e, 0xb1, 0x6c, 0x42, 0x03, 0x93, 0x79, 0xa6, 0x65, 0xdb, 0x46,
-	0x5e, 0x50, 0xbd, 0x3f, 0x4a, 0xc5, 0x75, 0xb5, 0xd1, 0x16, 0xc0, 0x57, 0x56, 0x7f, 0x48, 0x0e,
-	0x7c, 0xae, 0x0a, 0xcd, 0xe2, 0xbb, 0x66, 0xee, 0x6b, 0x2d, 0xa3, 0xff, 0x67, 0x1e, 0xdf, 0x50,
-	0x74, 0x12, 0x14, 0x1c, 0x7b, 0x9b, 0xb6, 0x8d, 0x9e, 0xc0, 0x4a, 0xca, 0x28, 0x94, 0x0c, 0xbc,
-	0x53, 0x62, 0x54, 0xf8, 0x96, 0xe1, 0xa5, 0x71, 0x39, 0x2c, 0x7a, 0xd1, 0x09, 0x2c, 0x53, 0x12,
-	0xf8, 0x9e, 0x1b, 0x90, 0xf1, 0x19, 0xc2, 0x37, 0x9b, 0xe1, 0x62, 0xc8, 0x37, 0x32, 0xc5, 0xa7,
-	0x50, 0x4b, 0x1b, 0x47, 0xcd, 0xb1, 0x24, 0xe6, 0xb8, 0x7c, 0x41, 0x52, 0x4d, 0x72, 0x03, 0xb2,
-	0x1d, 0x8f, 0x06, 0x46, 0x61, 0x55, 0x5b, 0x2b, 0x6d, 0xdc, 0x49, 0x5b, 0xfe, 0x2d, 0x8f, 0x06,
-	0x87, 0x5e, 0xdf, 0xe9, 0x9c, 0x63, 0x81, 0x45, 0x36, 0x2c, 0xf8, 0x84, 0x9a, 0x27, 0x4e, 0x9f,
-	0x11, 0x6a, 0x76, 0x3c, 0xf7, 0xc4, 0xe9, 0x1a, 0x65, 0xf1, 0x4a, 0x8f, 0x27, 0xe9, 0xd8, 0x21,
-	0xa1, 0xcf, 0x85, 0xdc, 0x96, 0x10, 0x6b, 0xb9, 0x8c, 0x9e, 0x37, 0x67, 0x0d, 0x0d, 0xcf, 0xfb,
-	0xa3, 0x3d, 0xc8, 0x87, 0x65, 0x7e, 0xda, 0x6d, 0xf3, 0xe2, 0x58, 0xf3, 0x62, 0xac, 0x27, 0x13,
-	0xf5, 0x99, 0x8b, 0xa7, 0x0d, 0x88, 0x17, 0x59, 0x4a, 0x17, 0xda, 0x84, 0xdb, 0x8e, 0xdb, 0xe9,
-	0x0f, 0x6d, 0x62, 0x86, 0x7b, 0x6e, 0x31, 0x46, 0x06, 0x3e, 0x33, 0x3b, 0xde, 0xd0, 0x65, 0x46,
-	0x75, 0x55, 0x5b, 0x2b, 0xe0, 0x9a, 0x02, 0x61, 0x89, 0xd9, 0x94, 0x90, 0x2d, 0x8e, 0x40, 0x4d,
-	0x28, 0x53, 0xc2, 0xe8, 0xb9, 0xe9, 0x8b, 0x05, 0x33, 0x74, 0xb1, 0xac, 0x77, 0x53, 0xb5, 0x9a,
-	0xe3, 0xd4, 0xba, 0x96, 0x68, 0xfc, 0xc0, 0x39, 0x7a, 0xc4, 0xee, 0x92, 0x90, 0x63, 0xe1, 0x72,
-	0x8e, 0x36, 0xc7, 0x85, 0x1c, 0xbd, 0xf8, 0x01, 0xfd, 0x21, 0xdc, 0xe1, 0xcb, 0x16, 0xbe, 0xc6,
-	0xeb, 0xe1, 0xc9, 0x09, 0xa1, 0xf2, 0xa8, 0x99, 0xaf, 0xcf, 0xb9, 0x2d, 0x41, 0x82, 0xf5, 0xbd,
-	0x86, 0x34, 0x73, 0x8d, 0xd0, 0xcc, 0x35, 0x5e, 0x6e, 0xbb, 0xec, 0xd1, 0x86, 0x50, 0x40, 0x5c,
-	0xf3, 0x09, 0x55, 0x6f, 0xd9, 0x14, 0x0c, 0xe2, 0xe8, 0x35, 0xb9, 0x7c, 0xed, 0x67, 0xb0, 0x98,
-	0xb6, 0xb4, 0x48, 0x87, 0xcc, 0x1b, 0x72, 0x2e, 0xad, 0x1d, 0xe6, 0x3f, 0xd1, 0x87, 0x30, 0x77,
-	0xca, 0xe9, 0x8c, 0x59, 0x31, 0xe4, 0xf2, 0x85, 0x21, 0x8f, 0x84, 0xdd, 0xc5, 0x12, 0xf5, 0xd9,
-	0xec, 0x0f, 0xb4, 0xda, 0xcf, 0x61, 0xe5, 0xd2, 0xcd, 0x4b, 0x19, 0xe1, 0xe1, 0xe8, 0x08, 0x8b,
-	0x17, 0x46, 0xd8, 0x74, 0xcf, 0x13, 0xf4, 0xf5, 0xcf, 0x00, 0x5d, 0xb4, 0x75, 0xa8, 0x00, 0xd9,
-	0xfd, 0x83, 0xfd, 0x96, 0x3e, 0x83, 0x16, 0xa0, 0xd2, 0xfa, 0xbd, 0xe3, 0x16, 0xde, 0xdf, 0xdc,
-	0x35, 0x0f, 0xf6, 0x77, 0xbf, 0xd0, 0x35, 0x94, 0x87, 0xcc, 0xe6, 0xee, 0xae, 0x3e, 0xbb, 0x93,
-	0x2d, 0x14, 0x75, 0xa8, 0xff, 0x39, 0xc0, 0x9c, 0x30, 0xb9, 0x08, 0x29, 0xf3, 0x5e, 0x15, 0xd3,
-	0x91, 0x56, 0xfd, 0xc7, 0x30, 0x27, 0xdc, 0x9b, 0x98, 0xe3, 0x25, 0xa7, 0x4a, 0x48, 0xef, 0x71,
-	0x94, 0xb0, 0xf9, 0x7f, 0xac, 0xcd, 0xea, 0x1a, 0x96, 0x62, 0xe8, 0x53, 0x98, 0x13, 0x20, 0xf5,
-	0x3e, 0x77, 0x2f, 0x95, 0xdf, 0xec, 0x70, 0x13, 0xd1, 0x9e, 0xc1, 0x12, 0x8f, 0x7e, 0x02, 0x05,
-	0x4a, 0x6c, 0x87, 0x92, 0x0e, 0x33, 0x32, 0x42, 0xb6, 0x9e, 0xae, 0x7a, 0x12, 0x13, 0x89, 0x47,
-	0x52, 0xe8, 0x08, 0xe6, 0xe5, 0x2f, 0x33, 0xb4, 0x18, 0x46, 0x5e, 0x10, 0xad, 0xa5, 0x11, 0x3d,
-	0x13, 0x50, 0xac, 0x90, 0x11, 0x5d, 0xd5, 0x1e, 0x69, 0x47, 0x9f, 0x42, 0x61, 0x40, 0x98, 0x65,
-	0x5b, 0xcc, 0x12, 0xbe, 0xa8, 0xb4, 0x71, 0x2b, 0xc5, 0xf4, 0xed, 0x29, 0x08, 0x8e, 0xc0, 0xe8,
-	0x29, 0x14, 0x6d, 0xd2, 0xf1, 0xa8, 0xc5, 0x3c, 0x6a, 0xcc, 0x09, 0xc9, 0x54, 0x0f, 0xf1, 0x2c,
-	0x04, 0xe1, 0x18, 0x8f, 0x7e, 0x91, 0x66, 0xa6, 0x0a, 0xc2, 0x74, 0x34, 0x2e, 0x5d, 0xd1, 0x6b,
-	0x18, 0xa8, 0x2f, 0x2f, 0x37, 0x50, 0x15, 0x31, 0xca, 0xa3, 0xcb, 0x47, 0xb9, 0xae, 0x69, 0xba,
-	0xdc, 0xd9, 0x15, 0xbf, 0x2d, 0x67, 0x57, 0xfe, 0xcd, 0x77, 0x76, 0x1f, 0x43, 0x9e, 0x51, 0xab,
-	0xe3, 0xb8, 0xdc, 0x85, 0xa4, 0xa8, 0xa1, 0xdc, 0xa1, 0x63, 0x09, 0xc1, 0x21, 0x76, 0x0a, 0x63,
-	0xaa, 0xff, 0xf6, 0x1a, 0xd3, 0x66, 0x05, 0x72, 0x96, 0x38, 0xf8, 0x28, 0xf3, 0x3f, 0x4d, 0x6d,
-	0x27, 0x5b, 0xc8, 0xe9, 0xf9, 0xfa, 0x9f, 0x16, 0x61, 0xfe, 0xa7, 0xc4, 0xe9, 0xf6, 0x18, 0xb1,
-	0x55, 0xc4, 0x87, 0x7e, 0x0a, 0x85, 0x28, 0x6e, 0xd4, 0x84, 0x4e, 0x7c, 0x94, 0xb6, 0xfc, 0x63,
-	0x62, 0x0d, 0xf5, 0xaf, 0x6c, 0x4e, 0xc4, 0xc7, 0x11, 0x19, 0x6a, 0x43, 0x99, 0x79, 0xcc, 0xea,
-	0x9b, 0x6f, 0x05, 0x46, 0x59, 0xbe, 0x2b, 0x77, 0x43, 0xc4, 0xe1, 0x0f, 0x67, 0xd7, 0x34, 0x5c,
-	0x12, 0xa2, 0x92, 0x1d, 0x7d, 0x00, 0x88, 0x0e, 0x5d, 0xe6, 0x0c, 0x88, 0xf9, 0x86, 0x9c, 0x9b,
-	0x3e, 0x25, 0x27, 0xce, 0x99, 0x58, 0x88, 0x22, 0xd6, 0x55, 0xcf, 0x0b, 0x72, 0x7e, 0x28, 0xda,
-	0x6b, 0x7f, 0x93, 0x87, 0xca, 0xc8, 0xec, 0xae, 0x8e, 0xf5, 0x1f, 0x43, 0x4e, 0x4d, 0x70, 0x76,
-	0x0a, 0x75, 0x51, 0x58, 0xd4, 0x84, 0x6a, 0x68, 0x0e, 0x4d, 0xe9, 0x54, 0x32, 0x93, 0x2d, 0x68,
-	0x25, 0x14, 0x11, 0x0e, 0xe6, 0x0a, 0xeb, 0x91, 0xfd, 0xb6, 0xac, 0x47, 0xf1, 0x9b, 0x5a, 0x8f,
-	0xb9, 0x6f, 0xcf, 0x7a, 0xe4, 0xae, 0xb6, 0x1e, 0xa7, 0x97, 0xfb, 0x93, 0xe7, 0xd7, 0x56, 0xe4,
-	0x6b, 0xf8, 0x99, 0x5f, 0x69, 0x97, 0x3b, 0x1a, 0x69, 0x5b, 0x5f, 0x5c, 0x7f, 0xf8, 0x6b, 0x3a,
-	0xa0, 0xdf, 0x64, 0x0b, 0xb5, 0x93, 0x2d, 0xe4, 0xf5, 0x42, 0xfd, 0x8f, 0x72, 0x00, 0x71, 0xd0,
-	0x85, 0x0c, 0xc8, 0xa9, 0xe3, 0x2d, 0x98, 0xdb, 0x33, 0x58, 0x3d, 0xa3, 0x45, 0xc8, 0xfa, 0x16,
-	0xeb, 0xc9, 0x63, 0xdf, 0x9e, 0xc1, 0xe2, 0x09, 0xd5, 0x61, 0x4e, 0x94, 0x32, 0xc4, 0xf1, 0x2b,
-	0x36, 0xe1, 0x5d, 0x73, 0x8e, 0x66, 0xd6, 0x7e, 0x59, 0x30, 0x34, 0x11, 0x7e, 0xf1, 0x2e, 0xf4,
-	0x02, 0x20, 0xb0, 0x4e, 0x78, 0xf6, 0xc0, 0x81, 0x20, 0x66, 0xb7, 0xaa, 0xf6, 0x86, 0xaf, 0x6a,
-	0x43, 0x15, 0x3d, 0x1a, 0x98, 0x03, 0xf6, 0xe4, 0x43, 0x1c, 0xfe, 0xb5, 0x67, 0x70, 0x91, 0xcb,
-	0x8b, 0x5e, 0xb4, 0x09, 0xd5, 0x8e, 0x15, 0x10, 0x33, 0x20, 0x6e, 0xe0, 0x30, 0xe7, 0x94, 0xa8,
-	0xd0, 0xa9, 0x76, 0xe1, 0x75, 0x9b, 0x9e, 0xd7, 0x97, 0x46, 0xa3, 0xc2, 0x25, 0x8e, 0x42, 0x01,
-	0xf4, 0x0a, 0x42, 0xa3, 0x65, 0x9e, 0x50, 0x69, 0xa4, 0x8d, 0xa2, 0x20, 0xf9, 0x5e, 0xca, 0x79,
-	0xc2, 0x12, 0xfa, 0x5c, 0x21, 0xad, 0xfe, 0xa1, 0xac, 0xc0, 0xe0, 0x79, 0x3a, 0xda, 0x83, 0x9e,
-	0x42, 0x5e, 0x9d, 0x1e, 0x95, 0xb6, 0xdf, 0x4b, 0x4f, 0x4e, 0x38, 0x44, 0xbd, 0x25, 0x0e, 0x25,
-	0xd0, 0x31, 0xe8, 0x5f, 0x0d, 0x09, 0x4f, 0x91, 0x2c, 0x6a, 0x0d, 0x88, 0x70, 0x07, 0x32, 0x63,
-	0xff, 0x6e, 0x1a, 0xcb, 0xef, 0x72, 0xec, 0x61, 0x08, 0x0d, 0xd9, 0xe6, 0xbf, 0x1a, 0x69, 0xe6,
-	0x3e, 0x20, 0xdb, 0xa5, 0x7e, 0x47, 0xe5, 0xb1, 0x8f, 0xaf, 0x8e, 0xb8, 0x1b, 0x9f, 0x53, 0xbf,
-	0x13, 0x3f, 0x4a, 0xeb, 0x11, 0x60, 0xc1, 0x80, 0x5e, 0x41, 0x89, 0xf5, 0x03, 0x7e, 0xc0, 0x18,
-	0x39, 0x63, 0x46, 0x49, 0x10, 0x7e, 0x3c, 0x81, 0xf0, 0xb8, 0x1f, 0x6c, 0x49, 0x81, 0x11, 0x46,
-	0x60, 0x51, 0x7b, 0x6d, 0x19, 0x6e, 0xa6, 0x0e, 0x5b, 0xc3, 0xb0, 0x94, 0x2e, 0x8e, 0x7e, 0x00,
-	0x45, 0x9f, 0x92, 0x80, 0xb8, 0x8c, 0xd8, 0x2a, 0x97, 0xb8, 0x6a, 0xf7, 0x63, 0x70, 0xf3, 0x26,
-	0x54, 0xb9, 0xd6, 0x9a, 0x81, 0x4f, 0x3a, 0xce, 0x89, 0x43, 0x68, 0xe8, 0x9c, 0xe7, 0xf4, 0x5c,
-	0xfd, 0x2f, 0xe6, 0x00, 0xe2, 0xa4, 0x1e, 0x3d, 0x80, 0xb2, 0xd5, 0xef, 0x7b, 0x6f, 0x4d, 0x8f,
-	0x3a, 0x5d, 0xc7, 0x15, 0xbe, 0xb9, 0x28, 0x4c, 0x51, 0x49, 0xb4, 0x1f, 0x88, 0x66, 0xf4, 0x23,
-	0x40, 0x49, 0x98, 0x52, 0xf2, 0x82, 0x00, 0xcf, 0xbf, 0x6b, 0xc2, 0xd7, 0x5a, 0xbe, 0x1e, 0x1e,
-	0x09, 0xac, 0x27, 0x24, 0xa5, 0x3a, 0xff, 0x01, 0xac, 0x8c, 0x88, 0xcb, 0xba, 0x9f, 0x72, 0x69,
-	0xa5, 0x11, 0x2d, 0x1a, 0x39, 0x2a, 0x47, 0x02, 0x17, 0xee, 0xfb, 0x52, 0x82, 0x37, 0xd1, 0x83,
-	0xee, 0x43, 0x45, 0xb2, 0x0f, 0x08, 0xeb, 0x79, 0x76, 0xa0, 0x7c, 0xb6, 0x7c, 0xb1, 0x3d, 0xd9,
-	0x16, 0x83, 0x42, 0xe5, 0xcd, 0x24, 0x40, 0xca, 0xda, 0xa3, 0x07, 0x50, 0x25, 0x67, 0xbe, 0x17,
-	0x3b, 0x08, 0x71, 0xec, 0x8a, 0xb8, 0x22, 0x5b, 0x43, 0xd8, 0x32, 0xe4, 0x07, 0xd6, 0x99, 0x69,
-	0x75, 0x89, 0xc8, 0x4b, 0x8a, 0x38, 0x37, 0xb0, 0xce, 0x36, 0xbb, 0x04, 0x7d, 0x0e, 0x0b, 0x72,
-	0x90, 0x0e, 0x25, 0x36, 0x71, 0x99, 0x63, 0xf5, 0xf9, 0x29, 0x99, 0xb4, 0x77, 0x72, 0xc1, 0xb6,
-	0x62, 0x19, 0xf4, 0x19, 0xe4, 0x89, 0x6b, 0xbd, 0xee, 0x13, 0x5b, 0x65, 0x60, 0x57, 0x88, 0xf3,
-	0xdd, 0x6a, 0xcf, 0xe0, 0x50, 0x00, 0x1d, 0x43, 0x55, 0xf9, 0x89, 0x90, 0xe2, 0xfa, 0xc7, 0xbe,
-	0x3d, 0x83, 0x2b, 0x92, 0xa4, 0xa5, 0x58, 0x31, 0x54, 0x83, 0x9e, 0x65, 0x7b, 0x6f, 0x23, 0x56,
-	0xb8, 0xbe, 0x31, 0xa9, 0x48, 0x0a, 0xc5, 0xd9, 0xbc, 0x01, 0x0b, 0x8a, 0x2c, 0xd6, 0xd5, 0xfa,
-	0x3f, 0xde, 0x84, 0x52, 0x22, 0xbf, 0x45, 0xf7, 0x21, 0xaf, 0x82, 0xbd, 0xb1, 0xc8, 0x8a, 0xbf,
-	0xb3, 0xea, 0x41, 0xdf, 0x87, 0xaa, 0xfa, 0xa9, 0x76, 0x4e, 0xea, 0x40, 0x12, 0x5b, 0x51, 0x00,
-	0xb9, 0x89, 0x08, 0xc3, 0xc2, 0x5b, 0xe5, 0x24, 0xe3, 0x8a, 0xa6, 0x8c, 0xae, 0xee, 0x4f, 0xe1,
-	0x51, 0xdb, 0x33, 0x58, 0x7f, 0x3b, 0xda, 0x14, 0xa0, 0x3f, 0xd1, 0xe0, 0x6e, 0x38, 0x0d, 0xd7,
-	0x63, 0xe6, 0x89, 0x37, 0x74, 0xed, 0x28, 0x97, 0x36, 0x3b, 0x9e, 0x4d, 0x8c, 0x45, 0x51, 0x8e,
-	0x7d, 0x3a, 0x21, 0xab, 0x0f, 0x1d, 0xf6, 0xbe, 0xc7, 0x9e, 0x73, 0x92, 0x30, 0x9b, 0xde, 0xf2,
-	0x6c, 0x22, 0x7c, 0xc6, 0xaf, 0x44, 0xc9, 0xe0, 0x56, 0xe7, 0x72, 0x58, 0x4a, 0xf0, 0x98, 0xbd,
-	0x76, 0xf0, 0xf8, 0x00, 0xaa, 0xd2, 0x31, 0x9a, 0x94, 0xbc, 0xa5, 0x0e, 0x0b, 0x15, 0xbe, 0x22,
-	0x5b, 0xb1, 0x6c, 0x44, 0xf7, 0xa1, 0xdc, 0xf3, 0x02, 0x16, 0x81, 0x72, 0xc2, 0x7b, 0x6a, 0xb8,
-	0xc4, 0x5b, 0x43, 0x50, 0x1b, 0x16, 0xac, 0x21, 0xf3, 0xcc, 0x11, 0xe4, 0x44, 0xed, 0x6e, 0x6b,
-	0x78, 0x9e, 0x8b, 0xb5, 0x13, 0x4c, 0x4f, 0xc0, 0xb8, 0xc0, 0x14, 0xee, 0xfb, 0x6d, 0x35, 0xf4,
-	0xcd, 0x31, 0x21, 0xb5, 0xed, 0x8f, 0x20, 0xcf, 0x55, 0xd3, 0x1b, 0x32, 0xe5, 0x2d, 0x56, 0x2e,
-	0x0c, 0xfd, 0x4c, 0xdd, 0x14, 0xe0, 0x10, 0x89, 0x7e, 0x08, 0x65, 0xc7, 0xee, 0x13, 0x33, 0x94,
-	0x34, 0x26, 0x49, 0x96, 0x38, 0xfc, 0x58, 0x49, 0x8f, 0x97, 0x05, 0x8b, 0xdf, 0xa0, 0x2c, 0xd8,
-	0x85, 0x9b, 0x61, 0x78, 0x3d, 0x70, 0x28, 0xf5, 0x68, 0x48, 0x26, 0x0f, 0xe1, 0xa3, 0x49, 0xea,
-	0xa4, 0x72, 0xcf, 0x3d, 0x21, 0xab, 0x06, 0x08, 0xe3, 0xf8, 0x64, 0x23, 0x6a, 0x43, 0xc1, 0xa7,
-	0x8e, 0x47, 0x1d, 0x76, 0x2e, 0xbc, 0x5f, 0x75, 0xbc, 0x88, 0x24, 0x0f, 0xb8, 0x37, 0x64, 0x8e,
-	0xdb, 0x3d, 0x54, 0xc8, 0x84, 0x46, 0x46, 0xd2, 0xe3, 0x25, 0xfe, 0xca, 0x75, 0x4b, 0xfc, 0x07,
-	0xb0, 0x14, 0x16, 0x64, 0x4f, 0x7b, 0x66, 0x92, 0xaa, 0x3a, 0xd1, 0xa0, 0xde, 0x50, 0x92, 0xaf,
-	0x7a, 0x38, 0x26, 0x7c, 0x01, 0xa5, 0x9e, 0x15, 0xf4, 0xc2, 0x95, 0x93, 0x75, 0xe4, 0x87, 0x93,
-	0x56, 0xae, 0x6d, 0x05, 0x3d, 0xb5, 0x60, 0xd0, 0x8b, 0x7e, 0x47, 0xa5, 0xf3, 0x85, 0x6b, 0x94,
-	0xce, 0xb7, 0x40, 0xe7, 0x6e, 0x83, 0x07, 0x1a, 0x91, 0x2a, 0x2d, 0x4f, 0x52, 0xa5, 0xea, 0xc0,
-	0x3a, 0xe3, 0xa1, 0x43, 0xa8, 0x4d, 0xdb, 0x70, 0x23, 0x49, 0x60, 0x7a, 0x27, 0x27, 0x01, 0x61,
-	0xc6, 0x7b, 0x93, 0x78, 0x16, 0xba, 0x31, 0xc9, 0x81, 0x90, 0x41, 0xaf, 0x60, 0x7e, 0xe8, 0x77,
-	0xa9, 0x65, 0x13, 0x95, 0x51, 0x04, 0xc6, 0x8a, 0x58, 0x94, 0x0f, 0x27, 0x2d, 0xca, 0x4b, 0x29,
-	0x26, 0x23, 0x75, 0x5c, 0x1d, 0x26, 0x1f, 0x03, 0xe4, 0x83, 0xe1, 0xb8, 0x8c, 0x50, 0xd7, 0xea,
-	0x9b, 0x61, 0x6d, 0xd1, 0x54, 0x11, 0x68, 0x4d, 0xe8, 0xd4, 0x27, 0x93, 0x06, 0xd8, 0x56, 0xf2,
-	0xa3, 0xc5, 0x4a, 0xbc, 0xe4, 0xa4, 0xb6, 0x5f, 0xa8, 0x9a, 0xdf, 0xba, 0x7e, 0xd5, 0xbc, 0xf6,
-	0xf7, 0x1a, 0xdc, 0x48, 0x39, 0x26, 0xe8, 0xde, 0x65, 0xfe, 0x27, 0xf6, 0x3e, 0xf7, 0xa1, 0x94,
-	0xa8, 0x1c, 0x28, 0xd7, 0xc3, 0x63, 0x28, 0x88, 0xcb, 0x06, 0xa9, 0xf1, 0x78, 0xe6, 0xff, 0x1e,
-	0x8f, 0xd7, 0xfe, 0x3a, 0x0b, 0x10, 0x2b, 0x29, 0x7a, 0x01, 0x39, 0x65, 0x09, 0x65, 0xcc, 0xf8,
-	0xd1, 0xf4, 0x0a, 0xae, 0x82, 0x76, 0x9e, 0x0d, 0x49, 0x0a, 0x4e, 0xd6, 0xf1, 0xbc, 0x37, 0x4e,
-	0x98, 0x6d, 0x5d, 0x87, 0x6c, 0x4b, 0x08, 0x72, 0x32, 0x49, 0x81, 0x4e, 0xe1, 0x66, 0xc7, 0x73,
-	0x5d, 0x22, 0x90, 0xa6, 0x4f, 0x3d, 0x9f, 0x50, 0xe6, 0x90, 0xd0, 0xeb, 0xfe, 0xce, 0xb5, 0xb8,
-	0x43, 0x9e, 0xc3, 0x88, 0xa6, 0x3d, 0x83, 0x17, 0x3b, 0x29, 0xed, 0xa8, 0x06, 0x05, 0x46, 0xe8,
-	0xc0, 0x71, 0xad, 0xbe, 0xf0, 0x80, 0x05, 0x1c, 0x3d, 0xd7, 0x36, 0x20, 0xa7, 0x1c, 0xc3, 0x1a,
-	0x94, 0xe4, 0x4b, 0x9b, 0x69, 0x45, 0x1c, 0x90, 0x7d, 0xfb, 0xd6, 0x80, 0xd4, 0x4e, 0x20, 0x27,
-	0xdf, 0xed, 0xea, 0x8a, 0xcf, 0xf7, 0x20, 0xc3, 0x58, 0x5f, 0x2d, 0xdc, 0x15, 0x07, 0x93, 0xa3,
-	0x10, 0x52, 0x69, 0xa7, 0x0c, 0x4a, 0xc5, 0xef, 0xda, 0x23, 0x58, 0x4c, 0x7b, 0x4f, 0x74, 0x0b,
-	0x8a, 0x81, 0x37, 0xa4, 0x1d, 0x62, 0x3a, 0xbe, 0x18, 0xba, 0x80, 0x0b, 0xb2, 0x61, 0xdb, 0x6f,
-	0x2e, 0x83, 0x2e, 0xcf, 0xc0, 0x58, 0xf4, 0x5f, 0xeb, 0x41, 0x65, 0xe4, 0xd4, 0xa2, 0x7b, 0x50,
-	0x0e, 0x4f, 0x3f, 0x8f, 0xb9, 0x55, 0x8e, 0x5d, 0x52, 0x6d, 0xe2, 0x52, 0xe4, 0x71, 0x1c, 0x85,
-	0xce, 0x4e, 0xb4, 0xb9, 0x21, 0xb4, 0xde, 0x82, 0x5b, 0x57, 0x44, 0x2f, 0x68, 0x19, 0x6e, 0x1c,
-	0xb5, 0xf0, 0xab, 0xed, 0xad, 0x96, 0xf9, 0x72, 0x7f, 0xf3, 0xd5, 0xe6, 0xf6, 0xee, 0x66, 0x73,
-	0xb7, 0xa5, 0xcf, 0xa0, 0x0a, 0x14, 0xf7, 0x0f, 0x8e, 0xcd, 0xe7, 0x07, 0x2f, 0xf7, 0x9f, 0xe9,
-	0x5a, 0xfd, 0xf7, 0x61, 0x29, 0xdd, 0x0a, 0xa0, 0x3a, 0xdc, 0x39, 0xdc, 0x3c, 0x3a, 0x32, 0x8f,
-	0xdb, 0xf8, 0xe0, 0xe5, 0xe7, 0x6d, 0x73, 0x7b, 0x5f, 0x5d, 0xd7, 0xe0, 0xd6, 0xb3, 0x6d, 0xdc,
-	0xda, 0x3a, 0xd6, 0x67, 0xd0, 0x7b, 0x60, 0xb4, 0x37, 0xf7, 0x9f, 0xed, 0xb6, 0x52, 0x7a, 0xb5,
-	0xa6, 0x01, 0x0b, 0x61, 0x9c, 0x36, 0xba, 0x4c, 0x4d, 0x03, 0x96, 0x46, 0xa2, 0x8a, 0xa8, 0x7b,
-	0x27, 0x5b, 0x28, 0xeb, 0x95, 0x9d, 0x6c, 0x01, 0xe9, 0x37, 0x76, 0xb2, 0x85, 0x1b, 0xfa, 0xe2,
-	0x4e, 0xb6, 0xa0, 0xeb, 0x0b, 0x3b, 0xd9, 0xc2, 0x92, 0xbe, 0xbc, 0x93, 0x2d, 0xdc, 0xd4, 0x97,
-	0xea, 0xff, 0x5d, 0x84, 0x52, 0xc2, 0x87, 0xa3, 0x15, 0x28, 0x48, 0xd7, 0xef, 0xb9, 0x6a, 0x7d,
-	0xf3, 0xe2, 0xf9, 0x80, 0x67, 0x54, 0x25, 0x77, 0x38, 0x30, 0xf9, 0x23, 0x3f, 0x03, 0xd3, 0x54,
-	0x05, 0xc1, 0x1d, 0x0e, 0xb0, 0xc4, 0xa3, 0x4d, 0x98, 0xf7, 0x09, 0x35, 0x39, 0x77, 0xe8, 0x4a,
-	0x32, 0x93, 0x34, 0xad, 0xe2, 0x13, 0x7a, 0x4c, 0xcf, 0x43, 0x4f, 0x72, 0x0c, 0x55, 0x15, 0x97,
-	0x84, 0x0e, 0x5f, 0xc6, 0x87, 0x1f, 0x4e, 0x88, 0x4c, 0xd4, 0x6f, 0x25, 0x84, 0x2b, 0x34, 0xf9,
-	0x88, 0x6c, 0x58, 0x94, 0xac, 0x62, 0x19, 0x7d, 0x6e, 0xff, 0x3b, 0x96, 0x88, 0x1b, 0xb9, 0x67,
-	0xd9, 0x98, 0x8a, 0x9b, 0x87, 0x6d, 0x87, 0xa1, 0x24, 0x46, 0xf4, 0x42, 0x1b, 0x6a, 0xc3, 0x3d,
-	0xc1, 0x1f, 0x90, 0xbe, 0xb2, 0x27, 0x72, 0x50, 0x91, 0x96, 0xc9, 0x3b, 0x59, 0x99, 0x78, 0x65,
-	0xf0, 0x6d, 0x0e, 0x3c, 0x0a, 0x71, 0x82, 0x7f, 0xcf, 0x3a, 0x53, 0x17, 0xb7, 0x01, 0x7a, 0x0c,
-	0x4b, 0x62, 0x0f, 0xb8, 0xee, 0x9a, 0x01, 0xb3, 0xd8, 0x30, 0x10, 0x81, 0xba, 0xac, 0x4b, 0x54,
-	0xf0, 0x62, 0xd4, 0x7b, 0x24, 0x3a, 0xb9, 0x0e, 0x07, 0x3c, 0x1b, 0x92, 0x03, 0xbe, 0xb6, 0x3a,
-	0x6f, 0xb8, 0x0f, 0x56, 0xd1, 0xe4, 0x07, 0x53, 0xbd, 0x5f, 0xd3, 0xea, 0xbc, 0x39, 0x38, 0x39,
-	0xc1, 0x32, 0x2e, 0x54, 0x4f, 0x68, 0x1f, 0x16, 0xe2, 0x99, 0x84, 0xf9, 0x67, 0x71, 0xda, 0x12,
-	0x8b, 0x1e, 0xc9, 0x86, 0x59, 0xea, 0xcf, 0x61, 0x25, 0xe6, 0x1b, 0x2b, 0xce, 0xaa, 0xda, 0xe1,
-	0x14, 0xbc, 0xcb, 0x11, 0x07, 0x1e, 0x29, 0xdf, 0xd6, 0xfe, 0x56, 0x83, 0xca, 0x88, 0x26, 0x5c,
-	0x6d, 0x0e, 0x3f, 0xe6, 0xae, 0x44, 0x94, 0x2d, 0xaf, 0x2e, 0x0d, 0xaa, 0x6c, 0x56, 0x81, 0xd1,
-	0x13, 0x28, 0xcb, 0xf2, 0xa7, 0x12, 0xce, 0x5c, 0x5e, 0xf5, 0x6b, 0xcf, 0xe0, 0x92, 0xc0, 0x4a,
-	0x03, 0xd7, 0xac, 0x40, 0x49, 0x0a, 0x09, 0xfb, 0x56, 0xfb, 0x3b, 0x0d, 0xd0, 0x45, 0xed, 0xfa,
-	0x7f, 0x3e, 0xe9, 0xbf, 0xd4, 0xa0, 0x9c, 0x54, 0x19, 0xb4, 0x03, 0x95, 0xd7, 0x56, 0x40, 0x4c,
-	0x11, 0x08, 0x9d, 0x5a, 0x7d, 0xe5, 0xe5, 0x2f, 0x3f, 0xf5, 0x4d, 0x78, 0xd7, 0xcc, 0xff, 0x5a,
-	0xcb, 0x16, 0xb4, 0x87, 0x33, 0xb8, 0xcc, 0x65, 0xb7, 0x95, 0x28, 0x7a, 0x0e, 0x65, 0x7e, 0x5e,
-	0x22, 0xaa, 0x49, 0xae, 0x4a, 0x84, 0xf9, 0xbf, 0xd6, 0x66, 0x1f, 0xce, 0xe0, 0xd2, 0xc0, 0x3a,
-	0x0b, 0x79, 0xea, 0xff, 0xa5, 0x41, 0x29, 0x11, 0x56, 0xa1, 0x43, 0xd0, 0x1d, 0xd7, 0x61, 0x8e,
-	0x08, 0xff, 0x84, 0xce, 0x04, 0x6a, 0x9a, 0x53, 0x5e, 0xcb, 0xcc, 0x2b, 0x71, 0xa5, 0x71, 0x01,
-	0xfa, 0x02, 0x56, 0x2c, 0xdb, 0x76, 0x64, 0x24, 0x14, 0xe9, 0x72, 0xa7, 0x67, 0xb9, 0x9d, 0x30,
-	0x34, 0xb9, 0x9d, 0xac, 0x1f, 0x5d, 0x0c, 0x9b, 0x96, 0x63, 0x79, 0xc5, 0xba, 0x25, 0xa4, 0xd1,
-	0x27, 0x60, 0xc8, 0xd0, 0x91, 0xc7, 0x24, 0x29, 0x16, 0xb5, 0x80, 0x17, 0x45, 0xff, 0x81, 0x7b,
-	0x98, 0xb4, 0x9e, 0xf5, 0x7f, 0xc8, 0x42, 0x75, 0xcc, 0x2f, 0x7d, 0x07, 0xaa, 0x3d, 0xc6, 0xfc,
-	0x20, 0x0a, 0x7a, 0x65, 0xb8, 0xd1, 0x9e, 0xc1, 0x15, 0xd1, 0x1e, 0xc2, 0xd1, 0x77, 0x61, 0x3e,
-	0xe8, 0xf4, 0xc8, 0x80, 0xc4, 0xc8, 0xbc, 0xaa, 0x37, 0x57, 0x65, 0x47, 0x04, 0xbd, 0x0f, 0x15,
-	0xe5, 0x8f, 0x14, 0x50, 0xba, 0x91, 0xb2, 0x4c, 0xac, 0x63, 0x90, 0xef, 0xd1, 0x04, 0x88, 0x1b,
-	0xa3, 0x0a, 0x2e, 0xf3, 0xc6, 0x08, 0xf4, 0x00, 0x2a, 0xa2, 0x2a, 0x18, 0x81, 0x66, 0x55, 0xa6,
-	0x5c, 0xe6, 0xcd, 0x11, 0xec, 0x3b, 0xe9, 0x19, 0x7f, 0x5b, 0x1b, 0xcf, 0xf9, 0x4f, 0xa0, 0x32,
-	0x5a, 0xd9, 0xc8, 0x88, 0xd0, 0xfe, 0xd3, 0xc9, 0xdf, 0x1c, 0x44, 0x8f, 0x97, 0x54, 0x35, 0xca,
-	0x34, 0x19, 0x2f, 0xdc, 0x85, 0x52, 0xc0, 0xa8, 0xe3, 0x9b, 0xa2, 0xea, 0x2b, 0x8c, 0x7a, 0x01,
-	0x83, 0x68, 0x12, 0xe5, 0xe1, 0xfa, 0x5b, 0x58, 0x4c, 0x23, 0x44, 0x37, 0x61, 0x61, 0xef, 0xe0,
-	0x55, 0xeb, 0x99, 0x79, 0xd8, 0xc2, 0x7b, 0x9b, 0xfb, 0xad, 0xfd, 0xe3, 0xdd, 0x2f, 0xf4, 0x19,
-	0x54, 0x84, 0x39, 0x15, 0x62, 0xf0, 0x88, 0xe3, 0xa8, 0xd5, 0x32, 0x0f, 0x8e, 0xdb, 0x2d, 0xac,
-	0xcf, 0xa2, 0x25, 0x40, 0xc7, 0xad, 0xbd, 0xc3, 0x03, 0xbc, 0x89, 0xbf, 0x88, 0xa3, 0x85, 0x0c,
-	0x6f, 0x8f, 0x28, 0xe2, 0xf6, 0x6c, 0xb3, 0x06, 0x46, 0xb4, 0x8d, 0x63, 0xd1, 0x02, 0x8f, 0x23,
-	0xd4, 0x6a, 0x8f, 0xf5, 0xd4, 0x07, 0xb0, 0x98, 0xf6, 0xe5, 0x04, 0xaa, 0x43, 0x4e, 0xba, 0x1f,
-	0xb1, 0xc5, 0x15, 0x71, 0x6e, 0x1f, 0xce, 0xe9, 0xff, 0x96, 0x5d, 0xb3, 0xb1, 0xea, 0x41, 0x1f,
-	0x41, 0xf6, 0xb5, 0x67, 0x9f, 0x8f, 0xa9, 0x7c, 0x32, 0x6f, 0x78, 0x66, 0x31, 0xeb, 0x48, 0x04,
-	0x83, 0x58, 0x40, 0xeb, 0x1b, 0x50, 0x8c, 0x3e, 0x90, 0x40, 0x0f, 0xa0, 0xc8, 0xc3, 0x48, 0x71,
-	0x9a, 0xc7, 0x2d, 0x5e, 0xdc, 0x53, 0xff, 0x0f, 0x0d, 0xf2, 0xea, 0x22, 0x1c, 0x3d, 0x87, 0xf9,
-	0x4e, 0xdf, 0x21, 0x2e, 0x33, 0x03, 0x6b, 0xe0, 0xf7, 0x1d, 0xb7, 0xab, 0xce, 0xf2, 0x84, 0x03,
-	0x57, 0x95, 0x52, 0x47, 0x4a, 0x88, 0xf3, 0x50, 0xcb, 0xb5, 0xbd, 0x41, 0xcc, 0x33, 0xd5, 0xc1,
-	0xad, 0x4a, 0xa9, 0x88, 0xa7, 0x0d, 0xba, 0x77, 0x4a, 0xa8, 0xd5, 0xef, 0xc7, 0x44, 0x99, 0x69,
-	0x88, 0xe6, 0x95, 0x58, 0xc8, 0x54, 0xff, 0x17, 0x0d, 0xaa, 0xa3, 0xdf, 0x29, 0xa2, 0xf7, 0x21,
-	0xef, 0xf3, 0xf0, 0x81, 0x86, 0xab, 0x93, 0xb8, 0xe9, 0xc1, 0x61, 0x57, 0xf2, 0x06, 0x24, 0x7b,
-	0xed, 0x1b, 0x90, 0xd0, 0xdf, 0xcc, 0xa6, 0xf9, 0x9b, 0x1f, 0x42, 0x4e, 0xd6, 0xb0, 0xd5, 0x61,
-	0x5a, 0x4d, 0xcb, 0x0c, 0x55, 0x8e, 0x2a, 0x70, 0x22, 0xcb, 0x54, 0x32, 0xf5, 0x7f, 0x2e, 0x42,
-	0x31, 0xaa, 0x77, 0xa0, 0xa7, 0x30, 0x17, 0x30, 0xab, 0x4b, 0xae, 0x61, 0x7a, 0x0d, 0xc0, 0x52,
-	0x86, 0x1f, 0x3a, 0xdb, 0x09, 0x44, 0xe4, 0x10, 0x65, 0xb4, 0x18, 0x54, 0x13, 0xcf, 0x66, 0xdb,
-	0x90, 0x97, 0x0b, 0x1c, 0x7e, 0x98, 0xfa, 0xfe, 0x95, 0x95, 0x9d, 0x86, 0x54, 0xf2, 0xe4, 0x17,
-	0xae, 0x4a, 0xbc, 0xf6, 0x67, 0x05, 0xc8, 0xa9, 0x23, 0xf0, 0x33, 0xa8, 0xaa, 0xcc, 0x26, 0x99,
-	0x71, 0x5f, 0x16, 0x35, 0x8e, 0x71, 0x37, 0xa4, 0xda, 0xc7, 0xf5, 0xd9, 0x4a, 0x90, 0x6c, 0x40,
-	0x5f, 0xc2, 0x0d, 0x9b, 0x04, 0xcc, 0x71, 0x85, 0x8e, 0x47, 0x23, 0x48, 0x25, 0xfc, 0x74, 0xaa,
-	0x11, 0x9e, 0xc5, 0xf2, 0xf1, 0x30, 0xc8, 0xbe, 0xd0, 0x8a, 0x7e, 0x01, 0xf3, 0xe3, 0x01, 0x57,
-	0xe6, 0x8a, 0x42, 0xdd, 0xf8, 0x38, 0xa3, 0x91, 0x16, 0xf7, 0x0a, 0xa3, 0x57, 0xe7, 0x7c, 0xa1,
-	0x28, 0x19, 0x78, 0x8c, 0x98, 0x96, 0x6d, 0x53, 0x12, 0x04, 0x2a, 0x74, 0xdf, 0x98, 0x92, 0x9e,
-	0x8b, 0x6e, 0x4a, 0x49, 0xbe, 0x50, 0x34, 0xd9, 0x80, 0x30, 0x94, 0xba, 0xc4, 0x25, 0xd4, 0xe9,
-	0x88, 0xbd, 0x97, 0x5f, 0x5e, 0xad, 0x4f, 0xc5, 0xfc, 0xb9, 0x94, 0x7b, 0x41, 0x78, 0x5c, 0x03,
-	0xdd, 0xe8, 0x09, 0x11, 0x40, 0x2a, 0xbb, 0x16, 0x37, 0xb3, 0xaa, 0x1e, 0x9d, 0xbb, 0xe2, 0x7a,
-	0x6d, 0x9c, 0x3a, 0x71, 0xe1, 0x2f, 0xce, 0x54, 0x7b, 0x06, 0xeb, 0xbd, 0xb1, 0xb6, 0xda, 0x3c,
-	0x54, 0x46, 0xb4, 0xa0, 0xb6, 0x08, 0xe8, 0xe2, 0xa6, 0xd5, 0xbe, 0xe4, 0xae, 0x7b, 0x64, 0x41,
-	0xa7, 0xce, 0xfe, 0x51, 0x03, 0xaa, 0x36, 0x09, 0x3a, 0xd4, 0xf1, 0x99, 0x47, 0x13, 0xe5, 0x9e,
-	0x08, 0x5c, 0x89, 0xbb, 0x5f, 0x90, 0x73, 0x3e, 0xa5, 0x91, 0xf5, 0xae, 0xfd, 0x04, 0x20, 0x5e,
-	0x26, 0xb4, 0x01, 0x7a, 0x82, 0x4e, 0xde, 0x6c, 0x8f, 0x8d, 0x3e, 0x1f, 0x03, 0xc4, 0xab, 0xd6,
-	0xfe, 0x49, 0x03, 0x7d, 0x7c, 0x39, 0xbe, 0x09, 0x11, 0xfa, 0x11, 0x94, 0xc9, 0x99, 0x4f, 0x3a,
-	0x4c, 0xed, 0xc7, 0xe4, 0x24, 0xbf, 0x24, 0xf1, 0x72, 0xc8, 0x56, 0x6c, 0x07, 0x33, 0x53, 0xda,
-	0xc1, 0xa4, 0x01, 0x50, 0xb2, 0xcd, 0x65, 0xd0, 0xa5, 0x2d, 0x18, 0xcb, 0xc5, 0xeb, 0xff, 0x9a,
-	0x81, 0xca, 0x88, 0xf4, 0xd5, 0xc1, 0xfa, 0x3d, 0x28, 0x91, 0x33, 0x2b, 0x7a, 0x99, 0xac, 0x8a,
-	0xa8, 0x40, 0x34, 0xca, 0x19, 0x7f, 0x08, 0x25, 0x71, 0x73, 0xa9, 0x20, 0x73, 0x29, 0xb7, 0xf9,
-	0x40, 0xa3, 0xeb, 0x79, 0xb4, 0x0b, 0x7a, 0x7c, 0xa5, 0x1f, 0xdd, 0x56, 0x4e, 0x75, 0xb1, 0x2f,
-	0x42, 0xb9, 0xf0, 0x3a, 0x5f, 0xb2, 0x3d, 0x81, 0x92, 0xf8, 0xcf, 0x0b, 0x23, 0xca, 0xbf, 0x94,
-	0x24, 0xda, 0x76, 0xd9, 0x27, 0x8f, 0x31, 0xc7, 0x88, 0x89, 0xf0, 0x1f, 0xe1, 0x35, 0x4c, 0x45,
-	0x5d, 0xef, 0x2a, 0xe1, 0xbc, 0x0a, 0x2c, 0xcb, 0xaa, 0x59, 0xc2, 0x3e, 0x80, 0xb2, 0x8a, 0xdd,
-	0x24, 0xaa, 0x38, 0x7e, 0x07, 0x56, 0x92, 0xdd, 0x11, 0x3a, 0x18, 0x9e, 0xc4, 0x68, 0xb8, 0x80,
-	0x96, 0xdd, 0x12, 0x7d, 0x0f, 0xca, 0x8e, 0x7b, 0x4a, 0x68, 0x38, 0x83, 0x82, 0x88, 0xc3, 0x4a,
-	0xb2, 0x4d, 0x7e, 0xca, 0x6a, 0xc0, 0x92, 0x3a, 0x44, 0x02, 0x32, 0x52, 0x3b, 0x99, 0xd5, 0x33,
-	0x3b, 0xd9, 0x42, 0x46, 0xcf, 0xd6, 0xff, 0x6a, 0x16, 0x6e, 0xa6, 0xde, 0xeb, 0xa3, 0x3b, 0x23,
-	0xbb, 0xcb, 0xe3, 0x1f, 0xca, 0x77, 0xe8, 0x97, 0x05, 0xb5, 0xc1, 0x46, 0xf8, 0xe9, 0x47, 0x26,
-	0x2a, 0xb0, 0xca, 0x06, 0xf4, 0x38, 0xfc, 0x3e, 0x23, 0x3b, 0xcd, 0x65, 0x69, 0xf8, 0xc5, 0xc6,
-	0x21, 0x94, 0x47, 0x2e, 0xa2, 0xa5, 0xa5, 0x9b, 0x7c, 0x11, 0x3d, 0xf2, 0xd1, 0x46, 0x29, 0x48,
-	0xdc, 0x44, 0x5f, 0xd8, 0xa7, 0x5c, 0xda, 0x3e, 0x35, 0xef, 0xc1, 0xdd, 0xb1, 0xaf, 0x20, 0xc6,
-	0x57, 0xac, 0xf9, 0x7d, 0x58, 0x75, 0x3c, 0x39, 0x13, 0x9f, 0x7a, 0x67, 0xe7, 0x29, 0x27, 0xab,
-	0x29, 0xbf, 0x68, 0x39, 0xe4, 0xef, 0x78, 0xa8, 0xbd, 0xce, 0x89, 0x97, 0x7d, 0xf4, 0xbf, 0x01,
-	0x00, 0x00, 0xff, 0xff, 0x26, 0x3f, 0xe1, 0xe6, 0xda, 0x33, 0x00, 0x00,
+	// 4110 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x5b, 0xcd, 0x6f, 0x1b, 0x49,
+	0x76, 0x57, 0x8b, 0x14, 0x3f, 0x1e, 0x3f, 0xd4, 0x2a, 0xc9, 0x12, 0x45, 0x7f, 0xc9, 0xf4, 0x1a,
+	0xa3, 0xf5, 0xce, 0x50, 0x6b, 0xd9, 0x33, 0xb3, 0x1e, 0xef, 0x6e, 0x56, 0x94, 0xe9, 0xa1, 0x64,
+	0x7d, 0xa5, 0x24, 0x7b, 0x33, 0xd9, 0xec, 0x74, 0x5a, 0xec, 0x12, 0xd9, 0x63, 0xb2, 0xbb, 0xa7,
+	0xba, 0x28, 0x4b, 0xb7, 0xc5, 0x5e, 0x02, 0x24, 0x97, 0x60, 0x2e, 0xb9, 0xe5, 0x90, 0xe4, 0xb4,
+	0x41, 0x2e, 0x01, 0x36, 0x40, 0xfe, 0x87, 0x24, 0x97, 0x5c, 0x72, 0x4e, 0x2e, 0x39, 0x27, 0x97,
+	0xc0, 0x40, 0x80, 0xa0, 0x3e, 0xfa, 0x83, 0x54, 0x4b, 0xa4, 0xbc, 0xc0, 0x20, 0x73, 0x91, 0xd9,
+	0x55, 0xbf, 0xf7, 0xab, 0xea, 0xaa, 0x57, 0xef, 0xbd, 0x7a, 0xaf, 0x0d, 0x77, 0x88, 0x73, 0xea,
+	0x9e, 0xaf, 0x99, 0x9e, 0xbd, 0x76, 0xba, 0xbe, 0x46, 0xdd, 0x01, 0x23, 0xf2, 0x6f, 0xdd, 0xa3,
+	0x2e, 0x73, 0x11, 0x12, 0xfd, 0x75, 0xd3, 0xb3, 0xeb, 0xa7, 0xeb, 0x75, 0xd1, 0x53, 0xbd, 0x35,
+	0x24, 0xd3, 0x76, 0x29, 0x59, 0x3b, 0x36, 0x7d, 0x25, 0x51, 0x55, 0x8c, 0xec, 0xdc, 0x23, 0x6b,
+	0x7d, 0x93, 0xb5, 0xbb, 0x84, 0xae, 0x51, 0xd2, 0x21, 0x67, 0xaa, 0xff, 0x6e, 0x42, 0xbf, 0xcf,
+	0xa8, 0xed, 0x74, 0x14, 0xa0, 0x12, 0x03, 0x78, 0x84, 0xb6, 0x89, 0xc3, 0x54, 0xcf, 0x62, 0xac,
+	0x87, 0x9a, 0x4e, 0x27, 0x18, 0x72, 0xb9, 0xe3, 0xba, 0x9d, 0x1e, 0x59, 0x13, 0x4f, 0xc7, 0x83,
+	0x93, 0x35, 0xd3, 0x39, 0x0f, 0x66, 0x33, 0xda, 0x65, 0x0d, 0xa8, 0xc9, 0x6c, 0xd7, 0x51, 0xfd,
+	0xb7, 0x46, 0xfb, 0x7d, 0x46, 0x07, 0x6d, 0x76, 0x99, 0xf4, 0x5b, 0x6a, 0x7a, 0x1e, 0xa1, 0xbe,
+	0xea, 0x5f, 0x3a, 0x35, 0x7b, 0xb6, 0x65, 0x32, 0xb2, 0x16, 0xfc, 0x90, 0x1d, 0xb5, 0x7f, 0x2f,
+	0x40, 0xe1, 0xb5, 0x4d, 0xd9, 0xc0, 0xec, 0xb5, 0x5c, 0x9f, 0xa1, 0x9b, 0x90, 0x76, 0xcc, 0x3e,
+	0xa9, 0x68, 0x2b, 0xda, 0x6a, 0xbe, 0x91, 0x7d, 0xd7, 0x48, 0xd3, 0xe9, 0x15, 0x0d, 0x8b, 0x46,
+	0x54, 0x83, 0xac, 0xe5, 0xf6, 0x4d, 0xdb, 0xf1, 0x2b, 0xd3, 0x2b, 0xa9, 0xd5, 0x7c, 0x23, 0xf7,
+	0xae, 0x31, 0xf3, 0x8d, 0x36, 0x9d, 0xd3, 0x70, 0xd0, 0x81, 0x1e, 0x41, 0x46, 0x2c, 0xbe, 0x5f,
+	0x49, 0xad, 0xa4, 0x56, 0x0b, 0xeb, 0xcb, 0xf5, 0x8b, 0x1b, 0x53, 0xc7, 0xfc, 0x2f, 0x56, 0x40,
+	0x74, 0x08, 0x05, 0x4a, 0xbe, 0x1e, 0xd8, 0x94, 0x18, 0xac, 0xe7, 0x57, 0xd2, 0x2b, 0xda, 0x6a,
+	0x79, 0x7d, 0x3d, 0x49, 0x2e, 0x36, 0xd3, 0xfa, 0x51, 0xcf, 0xc7, 0x52, 0xaa, 0x4f, 0x1c, 0x76,
+	0x74, 0xee, 0x11, 0x0c, 0x8a, 0xe6, 0xa8, 0xe7, 0xa3, 0x5d, 0xd0, 0x4f, 0x25, 0xda, 0x68, 0xf7,
+	0x06, 0x3e, 0x23, 0xd4, 0xaf, 0xcc, 0x88, 0x19, 0xd5, 0xae, 0x60, 0xde, 0x94, 0x50, 0x3c, 0x7b,
+	0x3a, 0xf4, 0xec, 0xa3, 0x9f, 0x42, 0x81, 0x9a, 0x8c, 0x18, 0x3d, 0xbb, 0x6f, 0x33, 0xbf, 0x92,
+	0x11, 0x4c, 0xb7, 0x13, 0xdf, 0xcd, 0x64, 0x64, 0x87, 0xa3, 0x30, 0xd0, 0xe0, 0xa7, 0x8f, 0x2c,
+	0x58, 0xe4, 0x93, 0x23, 0x3e, 0x33, 0xba, 0xc4, 0xb4, 0x08, 0xf5, 0x0d, 0xe6, 0x1a, 0xa6, 0x65,
+	0x55, 0xb2, 0x82, 0xea, 0x7b, 0xc3, 0x54, 0x5c, 0x57, 0xeb, 0x2d, 0x01, 0x7c, 0x6d, 0xf6, 0x06,
+	0x64, 0xdf, 0xe3, 0xaa, 0xd0, 0xc8, 0xbf, 0x6b, 0x64, 0xbe, 0xd1, 0x52, 0xfa, 0x7f, 0x66, 0xf1,
+	0xbc, 0xa2, 0x93, 0x20, 0xff, 0xc8, 0xdd, 0xb0, 0x2c, 0xf4, 0x14, 0x96, 0x13, 0x46, 0xa1, 0xa4,
+	0xef, 0x9e, 0x92, 0x4a, 0x89, 0x6f, 0x19, 0x5e, 0x1c, 0x95, 0xc3, 0xa2, 0x17, 0x9d, 0xc0, 0x12,
+	0x25, 0xbe, 0xe7, 0x3a, 0x3e, 0x19, 0x9d, 0x21, 0xbc, 0xdf, 0x0c, 0x17, 0x02, 0xbe, 0xa1, 0x29,
+	0x3e, 0x83, 0x6a, 0xd2, 0x38, 0x6a, 0x8e, 0x05, 0x31, 0xc7, 0xa5, 0x0b, 0x92, 0x6a, 0x92, 0xeb,
+	0x90, 0x6e, 0xbb, 0xd4, 0xaf, 0xe4, 0x56, 0xb4, 0xd5, 0xc2, 0xfa, 0x9d, 0xa4, 0xe5, 0xdf, 0x74,
+	0xa9, 0x7f, 0xe0, 0xf6, 0xec, 0xf6, 0x39, 0x16, 0x58, 0x64, 0xc1, 0x9c, 0x47, 0xa8, 0x71, 0x62,
+	0xf7, 0x18, 0xa1, 0x46, 0xdb, 0x75, 0x4e, 0xec, 0x4e, 0xa5, 0x28, 0x5e, 0xe9, 0xc9, 0x38, 0x1d,
+	0x3b, 0x20, 0xf4, 0x85, 0x90, 0xdb, 0x14, 0x62, 0x4d, 0x87, 0xd1, 0xf3, 0xc6, 0x74, 0x45, 0xc3,
+	0xb3, 0xde, 0x70, 0x0f, 0xf2, 0x60, 0x89, 0x9f, 0x76, 0xcb, 0xb8, 0x38, 0xd6, 0xac, 0x18, 0xeb,
+	0xe9, 0x58, 0x7d, 0xe6, 0xe2, 0x49, 0x03, 0xe2, 0x05, 0x96, 0xd0, 0x85, 0x36, 0xe0, 0xb6, 0xed,
+	0xb4, 0x7b, 0x03, 0x8b, 0x18, 0xc1, 0x9e, 0x9b, 0x8c, 0x91, 0xbe, 0xc7, 0x8c, 0xb6, 0x3b, 0x70,
+	0x58, 0xa5, 0xbc, 0xa2, 0xad, 0xe6, 0x70, 0x55, 0x81, 0xb0, 0xc4, 0x6c, 0x48, 0xc8, 0x26, 0x47,
+	0xa0, 0x06, 0x14, 0x29, 0x61, 0xf4, 0xdc, 0xf0, 0xc4, 0x82, 0x55, 0x74, 0xb1, 0xac, 0x77, 0x13,
+	0xb5, 0x9a, 0xe3, 0xd4, 0xba, 0x16, 0x68, 0xf4, 0xc0, 0x39, 0xba, 0xc4, 0xea, 0x90, 0x80, 0x63,
+	0xee, 0x72, 0x8e, 0x16, 0xc7, 0x05, 0x1c, 0xdd, 0xe8, 0x01, 0xfd, 0x31, 0xdc, 0xe1, 0xcb, 0x16,
+	0xbc, 0xc6, 0xf1, 0xe0, 0xe4, 0x84, 0x50, 0x79, 0xd4, 0x8c, 0xe3, 0x73, 0x6e, 0x4b, 0x90, 0x60,
+	0xbd, 0x55, 0x97, 0x66, 0xae, 0x1e, 0x98, 0xb9, 0xfa, 0xab, 0x2d, 0x87, 0x3d, 0x5e, 0x17, 0x0a,
+	0x88, 0xab, 0x1e, 0xa1, 0xea, 0x2d, 0x1b, 0x82, 0x41, 0x1c, 0xbd, 0x06, 0x97, 0xaf, 0xfe, 0x02,
+	0x16, 0x92, 0x96, 0x16, 0xe9, 0x90, 0x7a, 0x43, 0xce, 0xa5, 0xb5, 0xc3, 0xfc, 0x27, 0xfa, 0x08,
+	0x66, 0x4e, 0x39, 0x5d, 0x65, 0x5a, 0x0c, 0xb9, 0x74, 0x61, 0xc8, 0x43, 0x61, 0x77, 0xb1, 0x44,
+	0x7d, 0x36, 0xfd, 0x23, 0xad, 0xfa, 0x4b, 0x58, 0xbe, 0x74, 0xf3, 0x12, 0x46, 0x78, 0x38, 0x3c,
+	0xc2, 0xc2, 0x85, 0x11, 0x36, 0x9c, 0xf3, 0x18, 0x7d, 0xed, 0x33, 0x40, 0x17, 0x6d, 0x1d, 0xca,
+	0x41, 0x7a, 0x6f, 0x7f, 0xaf, 0xa9, 0x4f, 0xa1, 0x39, 0x28, 0x35, 0xff, 0xe0, 0xa8, 0x89, 0xf7,
+	0x36, 0x76, 0x8c, 0xfd, 0xbd, 0x9d, 0x2f, 0x74, 0x0d, 0x65, 0x21, 0xb5, 0xb1, 0xb3, 0xa3, 0x4f,
+	0x6f, 0xa7, 0x73, 0x79, 0x1d, 0x6a, 0xff, 0x0b, 0x30, 0x23, 0x4c, 0x2e, 0x42, 0xca, 0xbc, 0x97,
+	0xc5, 0x74, 0xa4, 0x55, 0xff, 0x29, 0xcc, 0x08, 0xf7, 0x26, 0xe6, 0x78, 0xc9, 0xa9, 0x12, 0xd2,
+	0xbb, 0x1c, 0x25, 0x6c, 0xfe, 0x9f, 0x6a, 0xd3, 0xba, 0x86, 0xa5, 0x18, 0xfa, 0x14, 0x66, 0x04,
+	0x48, 0xbd, 0xcf, 0xdd, 0x4b, 0xe5, 0x37, 0xda, 0xdc, 0x44, 0xb4, 0xa6, 0xb0, 0xc4, 0xa3, 0x9f,
+	0x41, 0x8e, 0x12, 0xcb, 0xa6, 0xa4, 0xcd, 0x2a, 0x29, 0x21, 0x5b, 0x4b, 0x56, 0x3d, 0x89, 0x09,
+	0xc5, 0x43, 0x29, 0x74, 0x08, 0xb3, 0xf2, 0x97, 0x11, 0x58, 0x8c, 0x4a, 0x56, 0x10, 0xad, 0x26,
+	0x11, 0x3d, 0x17, 0x50, 0xac, 0x90, 0x21, 0x5d, 0xd9, 0x1a, 0x6a, 0x47, 0x9f, 0x42, 0xae, 0x4f,
+	0x98, 0x69, 0x99, 0xcc, 0x14, 0xbe, 0xa8, 0xb0, 0x7e, 0x33, 0xc1, 0xf4, 0xed, 0x2a, 0x08, 0x0e,
+	0xc1, 0xe8, 0x19, 0xe4, 0x2d, 0xd2, 0x76, 0xa9, 0xc9, 0x5c, 0x5a, 0x99, 0x11, 0x92, 0x89, 0x1e,
+	0xe2, 0x79, 0x00, 0xc2, 0x11, 0x1e, 0x7d, 0x99, 0x64, 0xa6, 0x72, 0xc2, 0x74, 0xd4, 0x2f, 0x5d,
+	0xd1, 0x6b, 0x18, 0xa8, 0xaf, 0x2e, 0x37, 0x50, 0x25, 0x31, 0xca, 0xe3, 0xcb, 0x47, 0xb9, 0xae,
+	0x69, 0xba, 0xdc, 0xd9, 0xe5, 0xbf, 0x2d, 0x67, 0x57, 0xfc, 0xee, 0x3b, 0xbb, 0x8f, 0x21, 0xcb,
+	0xa8, 0xd9, 0xb6, 0x1d, 0xee, 0x42, 0x12, 0xd4, 0x50, 0xee, 0xd0, 0x91, 0x84, 0xe0, 0x00, 0x3b,
+	0x81, 0x31, 0xd5, 0x7f, 0x37, 0x63, 0x8a, 0xbe, 0x84, 0xa5, 0x2e, 0x63, 0x9e, 0xe1, 0x51, 0x62,
+	0xb4, 0x7b, 0x36, 0x71, 0x98, 0x52, 0x28, 0xbf, 0xb2, 0x20, 0x56, 0xef, 0x83, 0x44, 0xeb, 0xcf,
+	0x98, 0x77, 0x40, 0xc9, 0xa6, 0x10, 0x90, 0xea, 0x82, 0x17, 0xba, 0x17, 0x1b, 0xbf, 0xd3, 0xc6,
+	0xba, 0x51, 0x82, 0x8c, 0x29, 0x0c, 0x0b, 0x4a, 0xfd, 0x4f, 0x43, 0xdb, 0x4e, 0xe7, 0x32, 0x7a,
+	0xb6, 0xf6, 0x5b, 0x0d, 0xe6, 0x13, 0x5e, 0xff, 0xea, 0x60, 0xfb, 0x11, 0x64, 0xd4, 0xf9, 0xbc,
+	0xfa, 0xe5, 0x5a, 0x53, 0x58, 0x01, 0xd1, 0x53, 0x28, 0xca, 0x33, 0xae, 0x04, 0xd3, 0x97, 0xcf,
+	0xb9, 0x35, 0x85, 0x0b, 0x02, 0x2b, 0x5f, 0xbf, 0x51, 0x82, 0x82, 0x14, 0x32, 0x78, 0xeb, 0x76,
+	0x3a, 0x97, 0xd2, 0xd3, 0xb5, 0x3f, 0xcf, 0xc3, 0xec, 0xcf, 0x89, 0xdd, 0xe9, 0x32, 0x62, 0xa9,
+	0x48, 0x18, 0xfd, 0x1c, 0x72, 0x61, 0x3c, 0xad, 0x89, 0xdd, 0x7e, 0x94, 0xb4, 0xdb, 0x23, 0x62,
+	0x75, 0xf5, 0xaf, 0x6c, 0x8e, 0xdd, 0x1b, 0x42, 0x32, 0xd4, 0x82, 0x22, 0x73, 0x99, 0xd9, 0x33,
+	0xde, 0x0a, 0x8c, 0xf2, 0x08, 0x57, 0x6a, 0xa9, 0x58, 0xb2, 0x87, 0xd3, 0xab, 0x1a, 0x2e, 0x08,
+	0x51, 0xc9, 0x8e, 0x3e, 0x04, 0x44, 0x07, 0x0e, 0xb3, 0xfb, 0xc4, 0x78, 0x43, 0xce, 0xb9, 0x9a,
+	0x9e, 0xd8, 0x67, 0x62, 0x15, 0xf3, 0x58, 0x57, 0x3d, 0x2f, 0xc9, 0xf9, 0x81, 0x68, 0xaf, 0xfe,
+	0x6d, 0x16, 0x4a, 0x43, 0xb3, 0xbb, 0x7a, 0x5b, 0x9e, 0x40, 0x46, 0x4d, 0x70, 0x7a, 0x82, 0x63,
+	0xa4, 0xb0, 0xa8, 0x01, 0xe5, 0xc0, 0x4d, 0x18, 0xd2, 0xd9, 0xa6, 0xc6, 0x7b, 0x96, 0x52, 0x20,
+	0x22, 0x1c, 0xef, 0x15, 0x56, 0x35, 0xfd, 0x6d, 0x59, 0xd5, 0xfc, 0xfb, 0x5a, 0xd5, 0x99, 0x6f,
+	0xcf, 0xaa, 0x66, 0xae, 0xb6, 0xaa, 0xa7, 0x97, 0xfb, 0xd9, 0x17, 0xd7, 0x56, 0xe4, 0x6b, 0xf8,
+	0xdf, 0x5f, 0x6b, 0x97, 0x3b, 0x60, 0xe9, 0x73, 0x5e, 0x5e, 0x7f, 0xf8, 0x6b, 0x3a, 0xe6, 0xef,
+	0xb2, 0x65, 0xdd, 0x4e, 0xe7, 0xb2, 0x7a, 0xae, 0xf6, 0x27, 0x19, 0x80, 0x28, 0x18, 0x45, 0x15,
+	0xc8, 0xa8, 0xe3, 0x2d, 0x98, 0xb9, 0x2d, 0x94, 0xcf, 0x68, 0x01, 0xd2, 0x9e, 0xc9, 0xba, 0xf2,
+	0xd8, 0xb7, 0xa6, 0xb0, 0x78, 0x42, 0x35, 0x98, 0x11, 0x29, 0x1e, 0x71, 0xfc, 0xf2, 0x0d, 0x78,
+	0xd7, 0x98, 0xa1, 0xa9, 0xd5, 0x5f, 0xe5, 0x2a, 0x9a, 0x08, 0x4b, 0x79, 0x17, 0x7a, 0x09, 0xe0,
+	0x9b, 0x27, 0xfc, 0x56, 0xc5, 0x81, 0x20, 0x66, 0xb7, 0xa2, 0xf6, 0x86, 0xaf, 0x6a, 0x5d, 0x25,
+	0x83, 0xea, 0x98, 0x03, 0x76, 0xe5, 0x43, 0x14, 0x16, 0xb7, 0xa6, 0x70, 0x9e, 0xcb, 0x8b, 0x5e,
+	0xb4, 0x01, 0xe5, 0xb6, 0xe9, 0x13, 0xc3, 0x27, 0x8e, 0x6f, 0x33, 0xfb, 0x94, 0x28, 0xa3, 0x5c,
+	0xbd, 0xf0, 0xba, 0x0d, 0xd7, 0xed, 0x49, 0xa3, 0x51, 0xe2, 0x12, 0x87, 0x81, 0x00, 0x7a, 0x0d,
+	0x81, 0xd1, 0x32, 0x4e, 0xa8, 0x74, 0x2e, 0x95, 0xbc, 0x20, 0xf9, 0x41, 0xc2, 0x79, 0xc2, 0x12,
+	0xfa, 0x42, 0x21, 0xcd, 0xde, 0x81, 0xcc, 0x4c, 0xe1, 0x59, 0x3a, 0xdc, 0x83, 0x9e, 0x41, 0x56,
+	0x9d, 0x1e, 0x95, 0xce, 0xb8, 0x97, 0x7c, 0x69, 0xe3, 0x10, 0xf5, 0x96, 0x38, 0x90, 0x40, 0x47,
+	0xa0, 0x7f, 0x3d, 0x20, 0xfc, 0xea, 0x68, 0x52, 0xb3, 0x4f, 0x84, 0x3b, 0x90, 0x99, 0x8c, 0xef,
+	0x27, 0xb1, 0xfc, 0x3e, 0xc7, 0x1e, 0x04, 0xd0, 0x80, 0x6d, 0xf6, 0xeb, 0xa1, 0x66, 0xee, 0x03,
+	0xd2, 0x1d, 0xea, 0xb5, 0xd5, 0xfd, 0xfe, 0xc9, 0xd5, 0x37, 0x91, 0xfa, 0xe7, 0xd4, 0x6b, 0x47,
+	0x8f, 0xd2, 0x7a, 0xf8, 0x58, 0x30, 0xa0, 0xd7, 0x50, 0x60, 0x3d, 0x9f, 0x1f, 0x30, 0x46, 0xce,
+	0x58, 0xa5, 0x20, 0x08, 0x3f, 0x1e, 0x43, 0x78, 0xd4, 0xf3, 0x37, 0xa5, 0xc0, 0x10, 0x23, 0xb0,
+	0xb0, 0xbd, 0xba, 0x04, 0x37, 0x12, 0x87, 0xad, 0x62, 0x58, 0x4c, 0x16, 0x47, 0x3f, 0x82, 0xbc,
+	0x47, 0x89, 0x4f, 0x1c, 0x46, 0x2c, 0x75, 0xc7, 0xba, 0x6a, 0xf7, 0x23, 0x70, 0xe3, 0x06, 0x94,
+	0xb9, 0xd6, 0x1a, 0xbe, 0x47, 0xda, 0xf6, 0x89, 0x4d, 0x68, 0x10, 0x54, 0xcc, 0xe8, 0x99, 0xda,
+	0x5f, 0xce, 0x00, 0x44, 0xc9, 0x0e, 0xf4, 0x00, 0x8a, 0x66, 0xaf, 0xe7, 0xbe, 0x35, 0x5c, 0x6a,
+	0x77, 0x6c, 0x47, 0xf8, 0xe6, 0xbc, 0x30, 0x45, 0x05, 0xd1, 0xbe, 0x2f, 0x9a, 0xd1, 0x4f, 0x00,
+	0xc5, 0x61, 0x4a, 0xc9, 0x73, 0x02, 0x3c, 0xfb, 0xae, 0x01, 0xdf, 0x68, 0xd9, 0x5a, 0x70, 0x24,
+	0xb0, 0x1e, 0x93, 0x94, 0xea, 0xfc, 0x47, 0xb0, 0x3c, 0x24, 0x2e, 0xf3, 0xa1, 0xca, 0xa5, 0x15,
+	0x86, 0xb4, 0x68, 0xe8, 0xa8, 0x1c, 0x0a, 0x5c, 0xb0, 0xef, 0x8b, 0x31, 0xde, 0x58, 0x0f, 0xba,
+	0x0f, 0x25, 0xc9, 0xde, 0x27, 0xac, 0xeb, 0x5a, 0xbe, 0xf2, 0xd9, 0xf2, 0xc5, 0x76, 0x65, 0x5b,
+	0x04, 0x0a, 0x94, 0x37, 0x15, 0x03, 0x29, 0x6b, 0x8f, 0x1e, 0x40, 0x99, 0x9c, 0x79, 0x6e, 0xe4,
+	0x20, 0xc4, 0xb1, 0xcb, 0xe3, 0x92, 0x6c, 0x0d, 0x60, 0x4b, 0x90, 0xed, 0x9b, 0x67, 0x86, 0xd9,
+	0x21, 0xe2, 0xbe, 0x96, 0xc7, 0x99, 0xbe, 0x79, 0xb6, 0xd1, 0x21, 0xe8, 0x73, 0x98, 0x93, 0x83,
+	0xb4, 0x29, 0xb1, 0x88, 0xc3, 0x6c, 0xb3, 0xc7, 0x4f, 0xc9, 0xb8, 0xbd, 0x93, 0x0b, 0xb6, 0x19,
+	0xc9, 0xa0, 0xcf, 0x20, 0x4b, 0x1c, 0xf3, 0xb8, 0x47, 0x2c, 0x75, 0x33, 0xbd, 0x42, 0x9c, 0xef,
+	0x56, 0x6b, 0x0a, 0x07, 0x02, 0xe8, 0x08, 0xca, 0xca, 0x4f, 0x04, 0x14, 0xd7, 0x3f, 0xf6, 0xad,
+	0x29, 0x5c, 0x92, 0x24, 0x4d, 0xc5, 0x8a, 0xa1, 0xec, 0x77, 0x4d, 0xcb, 0x7d, 0x1b, 0xb2, 0xc2,
+	0xf5, 0x8d, 0x49, 0x49, 0x52, 0x28, 0xce, 0xc6, 0x3c, 0xcc, 0x29, 0xb2, 0x48, 0x57, 0x6b, 0xff,
+	0x78, 0x03, 0x0a, 0xb1, 0x7b, 0x3f, 0xba, 0x0f, 0x59, 0x15, 0xec, 0x8d, 0x44, 0x56, 0xfc, 0x9d,
+	0x55, 0x0f, 0xfa, 0x21, 0x94, 0xd5, 0x4f, 0xb5, 0x73, 0x52, 0x07, 0xe2, 0xd8, 0x92, 0x02, 0xc8,
+	0x4d, 0x44, 0x18, 0xe6, 0xde, 0x2a, 0x27, 0x19, 0x65, 0x7a, 0x65, 0x74, 0x75, 0x7f, 0x02, 0x8f,
+	0xda, 0x9a, 0xc2, 0xfa, 0xdb, 0xe1, 0x26, 0x1f, 0xfd, 0x99, 0x06, 0x77, 0x83, 0x69, 0x38, 0x2e,
+	0x33, 0x4e, 0xdc, 0x81, 0x63, 0x85, 0x39, 0x06, 0xa3, 0xed, 0x5a, 0xa4, 0xb2, 0x20, 0xd2, 0xd4,
+	0xcf, 0xc6, 0x64, 0x3b, 0x02, 0x87, 0xbd, 0xe7, 0xb2, 0x17, 0x9c, 0x24, 0xc8, 0x32, 0x6c, 0xba,
+	0x16, 0x11, 0x3e, 0xe3, 0xd7, 0x22, 0x95, 0x72, 0xb3, 0x7d, 0x39, 0x2c, 0x21, 0x78, 0x4c, 0x5f,
+	0x3b, 0x78, 0x7c, 0x00, 0x65, 0xe9, 0x18, 0x0d, 0x4a, 0xde, 0x52, 0x9b, 0x05, 0x0a, 0x5f, 0x92,
+	0xad, 0x58, 0x36, 0xa2, 0xfb, 0x50, 0xec, 0xba, 0x3e, 0x0b, 0x41, 0x19, 0xe1, 0x3d, 0x35, 0x5c,
+	0xe0, 0xad, 0x01, 0xa8, 0x05, 0x73, 0xe6, 0x80, 0xb9, 0xc6, 0x10, 0x72, 0xac, 0x76, 0xb7, 0x34,
+	0x3c, 0xcb, 0xc5, 0x5a, 0x31, 0xa6, 0xa7, 0x50, 0xb9, 0xc0, 0x14, 0xec, 0xfb, 0x6d, 0x35, 0xf4,
+	0x8d, 0x11, 0x21, 0xb5, 0xed, 0x8f, 0x21, 0xcb, 0x55, 0xd3, 0x1d, 0x30, 0xe5, 0x2d, 0x96, 0x2f,
+	0x0c, 0xfd, 0x5c, 0x55, 0x50, 0x70, 0x80, 0x44, 0x3f, 0x86, 0xa2, 0x6d, 0xf5, 0x88, 0x11, 0x48,
+	0x56, 0xc6, 0x49, 0x16, 0x38, 0xfc, 0x48, 0x49, 0x8f, 0xa6, 0x4b, 0xf3, 0xef, 0x91, 0x2e, 0xed,
+	0xc0, 0x8d, 0x20, 0xbc, 0xee, 0xdb, 0x94, 0xba, 0x34, 0x20, 0x93, 0x87, 0xf0, 0xf1, 0x38, 0x75,
+	0x52, 0x77, 0xf2, 0x5d, 0x21, 0xab, 0x06, 0x08, 0xe2, 0xf8, 0x78, 0x23, 0x6a, 0x41, 0xce, 0xa3,
+	0xb6, 0x4b, 0x6d, 0x76, 0x2e, 0xbc, 0x5f, 0x79, 0x34, 0xb9, 0x26, 0x0f, 0xb8, 0x3b, 0x60, 0xb6,
+	0xd3, 0x39, 0x50, 0xc8, 0x98, 0x46, 0x86, 0xd2, 0xa3, 0xa5, 0x8f, 0xd2, 0x75, 0x4b, 0x1f, 0xfb,
+	0xb0, 0x18, 0x24, 0xaa, 0x4f, 0xbb, 0x46, 0x9c, 0xaa, 0x3c, 0xd6, 0xa0, 0xce, 0x2b, 0xc9, 0xd7,
+	0x5d, 0x1c, 0x11, 0xbe, 0x84, 0x42, 0xd7, 0xf4, 0xbb, 0xc1, 0xca, 0xc9, 0xfc, 0xfa, 0xc3, 0x71,
+	0x2b, 0xd7, 0x32, 0xfd, 0xae, 0x5a, 0x30, 0xe8, 0x86, 0xbf, 0xc3, 0x92, 0xc2, 0xdc, 0x35, 0x4a,
+	0x0a, 0x9b, 0xa0, 0x73, 0xb7, 0xc1, 0x03, 0x8d, 0x50, 0x95, 0x96, 0xc6, 0xa9, 0x52, 0xb9, 0x6f,
+	0x9e, 0xf1, 0xd0, 0x21, 0xd0, 0xa6, 0x2d, 0x98, 0x8f, 0x13, 0x18, 0xee, 0xc9, 0x89, 0x4f, 0x58,
+	0xe5, 0xd6, 0x38, 0x9e, 0xb9, 0x4e, 0x44, 0xb2, 0x2f, 0x64, 0xd0, 0x6b, 0x98, 0x1d, 0x78, 0x1d,
+	0x6a, 0x5a, 0x44, 0xdd, 0x28, 0xfc, 0xca, 0xb2, 0x58, 0x94, 0x8f, 0xc6, 0x2d, 0xca, 0x2b, 0x29,
+	0x26, 0x23, 0x75, 0x5c, 0x1e, 0xc4, 0x1f, 0x7d, 0xe4, 0x41, 0xc5, 0x76, 0x18, 0xa1, 0x8e, 0xd9,
+	0x33, 0x82, 0x9c, 0xab, 0xa1, 0x22, 0xd0, 0xaa, 0xd0, 0xa9, 0x4f, 0xc6, 0x0d, 0xb0, 0xa5, 0xe4,
+	0x87, 0x93, 0xb8, 0x78, 0xd1, 0x4e, 0x6c, 0xbf, 0x50, 0x4d, 0xb8, 0x79, 0xfd, 0x6a, 0x42, 0xf5,
+	0xb7, 0x1a, 0xcc, 0x27, 0x1c, 0x13, 0x74, 0xef, 0x32, 0xff, 0x13, 0x79, 0x9f, 0xfb, 0x50, 0x88,
+	0x65, 0x0e, 0x94, 0xeb, 0xe1, 0x31, 0x14, 0x44, 0x69, 0x83, 0xc4, 0x78, 0x3c, 0xf5, 0xbb, 0xc7,
+	0xe3, 0xd5, 0xbf, 0x49, 0x03, 0x44, 0x4a, 0x8a, 0x5e, 0x42, 0x46, 0x59, 0x42, 0x19, 0x33, 0x3e,
+	0x9a, 0x5c, 0xc1, 0x55, 0xd0, 0xce, 0x6f, 0x43, 0x92, 0x82, 0x93, 0xb5, 0x5d, 0xf7, 0x8d, 0x1d,
+	0xdc, 0xb6, 0xae, 0x43, 0xb6, 0x29, 0x04, 0x65, 0x9a, 0x89, 0xff, 0x42, 0xa7, 0x70, 0xa3, 0xed,
+	0x3a, 0x0e, 0x11, 0x48, 0xc3, 0xa3, 0xae, 0x47, 0x28, 0xb3, 0x49, 0xe0, 0x75, 0x7f, 0xef, 0x5a,
+	0xdc, 0x01, 0xcf, 0x41, 0x48, 0xd3, 0x9a, 0xc2, 0x0b, 0xed, 0x84, 0x76, 0x54, 0x85, 0x1c, 0x23,
+	0xb4, 0x6f, 0x3b, 0x66, 0x4f, 0x78, 0xc0, 0x1c, 0x0e, 0x9f, 0xab, 0xeb, 0x90, 0x51, 0x8e, 0x61,
+	0x15, 0x0a, 0xf2, 0xa5, 0x8d, 0xa4, 0x24, 0x0e, 0xc8, 0xbe, 0x3d, 0xb3, 0x4f, 0xaa, 0x27, 0x90,
+	0x91, 0xef, 0x76, 0x75, 0xc6, 0xe7, 0x07, 0x90, 0x62, 0xac, 0xa7, 0x16, 0xee, 0x8a, 0x83, 0xc9,
+	0x51, 0x08, 0xa9, 0x6b, 0xa7, 0x0c, 0x4a, 0xc5, 0xef, 0xea, 0x63, 0x58, 0x48, 0x7a, 0x4f, 0x74,
+	0x13, 0xf2, 0xbe, 0x3b, 0xa0, 0x6d, 0x62, 0xd8, 0x9e, 0x18, 0x3a, 0x87, 0x73, 0xb2, 0x61, 0xcb,
+	0x6b, 0x2c, 0x81, 0x2e, 0xcf, 0xc0, 0x48, 0xf4, 0x5f, 0xed, 0x42, 0x69, 0xe8, 0xd4, 0xa2, 0x7b,
+	0x50, 0x0c, 0x4e, 0x3f, 0x8f, 0xb9, 0xd5, 0x1d, 0xbb, 0xa0, 0xda, 0x44, 0xb1, 0xe8, 0x49, 0x14,
+	0x85, 0x4e, 0x8f, 0xb5, 0xb9, 0x01, 0xb4, 0xd6, 0x84, 0x9b, 0x57, 0x44, 0x2f, 0x68, 0x09, 0xe6,
+	0x0f, 0x9b, 0xf8, 0xf5, 0xd6, 0x66, 0xd3, 0x78, 0xb5, 0xb7, 0xf1, 0x7a, 0x63, 0x6b, 0x67, 0xa3,
+	0xb1, 0xd3, 0xd4, 0xa7, 0x50, 0x09, 0xf2, 0x7b, 0xfb, 0x47, 0xc6, 0x8b, 0xfd, 0x57, 0x7b, 0xcf,
+	0x75, 0xad, 0xf6, 0x87, 0xb0, 0x98, 0x6c, 0x05, 0x50, 0x0d, 0xee, 0x1c, 0x6c, 0x1c, 0x1e, 0x1a,
+	0x47, 0x2d, 0xbc, 0xff, 0xea, 0xf3, 0x96, 0xb1, 0xb5, 0xa7, 0xca, 0x58, 0xb8, 0xf9, 0x7c, 0x0b,
+	0x37, 0x37, 0x8f, 0xf4, 0x29, 0x74, 0x0b, 0x2a, 0xad, 0x8d, 0xbd, 0xe7, 0x3b, 0xcd, 0x84, 0x5e,
+	0xad, 0x51, 0x81, 0xb9, 0x20, 0x4e, 0x1b, 0x5e, 0xa6, 0x46, 0x05, 0x16, 0x87, 0xa2, 0x8a, 0xb0,
+	0x7b, 0x3b, 0x9d, 0x2b, 0xea, 0xa5, 0xed, 0x74, 0x0e, 0xe9, 0xf3, 0xdb, 0xe9, 0xdc, 0xbc, 0xbe,
+	0xb0, 0x9d, 0xce, 0xe9, 0xfa, 0xdc, 0x76, 0x3a, 0xb7, 0xa8, 0x2f, 0x6d, 0xa7, 0x73, 0x37, 0xf4,
+	0xc5, 0xda, 0x7f, 0xe7, 0xa1, 0x10, 0xf3, 0xe1, 0x68, 0x19, 0x72, 0xd2, 0xf5, 0xbb, 0x8e, 0x5a,
+	0xdf, 0xac, 0x78, 0xde, 0xe7, 0x37, 0xaa, 0x82, 0x33, 0xe8, 0x1b, 0xfc, 0x91, 0x9f, 0x81, 0x49,
+	0xb2, 0x82, 0xe0, 0x0c, 0xfa, 0x58, 0xe2, 0xd1, 0x06, 0xcc, 0x7a, 0x84, 0x1a, 0x9c, 0x3b, 0x70,
+	0x25, 0xa9, 0x71, 0x9a, 0x56, 0xf2, 0x08, 0x3d, 0xa2, 0xe7, 0x81, 0x27, 0x39, 0x82, 0xb2, 0x8a,
+	0x4b, 0x02, 0x87, 0x2f, 0xe3, 0xc3, 0x8f, 0xc6, 0x44, 0x26, 0xea, 0xb7, 0x12, 0xc2, 0x25, 0x1a,
+	0x7f, 0x44, 0x16, 0x2c, 0x48, 0x56, 0xb1, 0x8c, 0x1e, 0xb7, 0xff, 0x6d, 0x53, 0xc4, 0x8d, 0xdc,
+	0xb3, 0xac, 0x4f, 0xc4, 0xcd, 0xc3, 0xb6, 0x83, 0x40, 0x12, 0x23, 0x7a, 0xa1, 0x0d, 0xb5, 0xe0,
+	0x9e, 0xe0, 0xf7, 0x49, 0x4f, 0xd9, 0x13, 0x39, 0xa8, 0xb8, 0x96, 0xc9, 0x5a, 0xb5, 0xbc, 0x78,
+	0xa5, 0xf0, 0x6d, 0x0e, 0x3c, 0x0c, 0x70, 0x82, 0x7f, 0xd7, 0x3c, 0x53, 0x05, 0x6d, 0x1f, 0x3d,
+	0x81, 0x45, 0xb1, 0x07, 0x5c, 0x77, 0x0d, 0x9f, 0x99, 0x6c, 0xe0, 0x8b, 0x40, 0x5d, 0xe6, 0x25,
+	0x4a, 0x78, 0x21, 0xec, 0x3d, 0x14, 0x9d, 0x5c, 0x87, 0x7d, 0x7e, 0x1b, 0x92, 0x03, 0x1e, 0x9b,
+	0xed, 0x37, 0xdc, 0x07, 0xab, 0x68, 0xf2, 0xc3, 0x89, 0xde, 0xaf, 0x61, 0xb6, 0xdf, 0xec, 0x9f,
+	0x9c, 0x60, 0x19, 0x17, 0xaa, 0x27, 0xb4, 0x07, 0x73, 0xd1, 0x4c, 0x82, 0xfb, 0x67, 0x7e, 0xd2,
+	0x14, 0x8b, 0x1e, 0xca, 0x06, 0xb7, 0xd4, 0x5f, 0xc2, 0x72, 0xc4, 0x37, 0x92, 0x9c, 0x55, 0xb9,
+	0xc3, 0x09, 0x78, 0x97, 0x42, 0x0e, 0x3c, 0x94, 0xbe, 0xad, 0xfe, 0x9d, 0x06, 0xa5, 0x21, 0x4d,
+	0xb8, 0xda, 0x1c, 0x7e, 0x3c, 0x61, 0x5d, 0x42, 0xdd, 0x66, 0x2f, 0xab, 0x4d, 0xa4, 0xde, 0xb7,
+	0x36, 0x51, 0xfd, 0x7b, 0x0d, 0xd0, 0x45, 0xed, 0xfa, 0x7f, 0x3e, 0xe9, 0xbf, 0xd2, 0xa0, 0x18,
+	0x57, 0x19, 0xb4, 0x0d, 0xa5, 0x63, 0xd3, 0x27, 0x86, 0x08, 0x84, 0x4e, 0xcd, 0x9e, 0xf2, 0xf2,
+	0x97, 0x9f, 0xfa, 0x06, 0xbc, 0x6b, 0x64, 0x7f, 0xa3, 0xa5, 0x73, 0xda, 0xc3, 0x29, 0x5c, 0xe4,
+	0xb2, 0x5b, 0x4a, 0x14, 0xbd, 0x80, 0x22, 0x3f, 0x2f, 0x21, 0xd5, 0x38, 0x57, 0x25, 0xc2, 0xfc,
+	0xdf, 0x68, 0xd3, 0x0f, 0xa7, 0x70, 0xa1, 0x6f, 0x9e, 0x05, 0x3c, 0xb5, 0xff, 0xd2, 0xa0, 0x10,
+	0x0b, 0xab, 0xd0, 0x01, 0xe8, 0xb6, 0x63, 0x33, 0x5b, 0x84, 0x7f, 0x42, 0x67, 0x7c, 0x35, 0xcd,
+	0x09, 0xcb, 0x32, 0xb3, 0x4a, 0x5c, 0x69, 0x9c, 0x8f, 0xbe, 0x80, 0x65, 0xd3, 0xb2, 0x6c, 0x19,
+	0x09, 0x85, 0xba, 0xdc, 0xee, 0x9a, 0x4e, 0x3b, 0x08, 0x4d, 0x6e, 0xc7, 0xf3, 0x47, 0x17, 0xc3,
+	0xa6, 0xa5, 0x48, 0x5e, 0xb1, 0x6e, 0x0a, 0x69, 0xf4, 0x09, 0x54, 0x64, 0xe8, 0xc8, 0x63, 0x92,
+	0x04, 0x8b, 0x9a, 0xc3, 0x0b, 0xa2, 0x7f, 0xdf, 0x39, 0x88, 0x5b, 0xcf, 0xda, 0x3f, 0xa4, 0xa1,
+	0x3c, 0xe2, 0x97, 0x3e, 0x80, 0x72, 0x97, 0x31, 0xcf, 0x0f, 0x83, 0x5e, 0x19, 0x6e, 0xb4, 0xa6,
+	0x70, 0x49, 0xb4, 0x07, 0x70, 0xf4, 0x7d, 0x98, 0xf5, 0xdb, 0x5d, 0xd2, 0x27, 0x11, 0x32, 0xab,
+	0xf2, 0xcd, 0x65, 0xd9, 0x11, 0x42, 0xef, 0x43, 0x49, 0xf9, 0x23, 0x05, 0x94, 0x6e, 0xa4, 0x28,
+	0x2f, 0xd6, 0x11, 0xc8, 0x73, 0x69, 0x0c, 0xc4, 0x8d, 0x51, 0x09, 0x17, 0x79, 0x63, 0x08, 0x7a,
+	0x00, 0x25, 0x91, 0x15, 0x0c, 0x41, 0xd3, 0xea, 0xa6, 0x5c, 0xe4, 0xcd, 0x21, 0xec, 0x83, 0xe4,
+	0x1b, 0x7f, 0x4b, 0x1b, 0xbd, 0xf3, 0x9f, 0x40, 0x69, 0x38, 0xb3, 0x91, 0x12, 0xa1, 0xfd, 0xa7,
+	0xe3, 0xbf, 0xc5, 0x08, 0x1f, 0x2f, 0xc9, 0x6a, 0x14, 0x69, 0x3c, 0x5e, 0xb8, 0x0b, 0x05, 0x9f,
+	0x51, 0xdb, 0x33, 0x44, 0xd6, 0x57, 0x18, 0xf5, 0x1c, 0x06, 0xd1, 0x24, 0xd2, 0xc3, 0xb5, 0xb7,
+	0xb0, 0x90, 0x44, 0x88, 0x6e, 0xc0, 0xdc, 0xee, 0xfe, 0xeb, 0xe6, 0x73, 0xe3, 0xa0, 0x89, 0x77,
+	0x37, 0xf6, 0x9a, 0x7b, 0x47, 0x3b, 0x5f, 0xe8, 0x53, 0x28, 0x0f, 0x33, 0x2a, 0xc4, 0xe0, 0x11,
+	0xc7, 0x61, 0xb3, 0x69, 0xec, 0x1f, 0xb5, 0x9a, 0x58, 0x9f, 0x46, 0x8b, 0x80, 0x8e, 0x9a, 0xbb,
+	0x07, 0xfb, 0x78, 0x03, 0x7f, 0x11, 0x45, 0x0b, 0x29, 0xde, 0x1e, 0x52, 0x44, 0xed, 0xe9, 0x46,
+	0x15, 0x2a, 0xe1, 0x36, 0x8e, 0x44, 0x0b, 0x3c, 0x8e, 0x50, 0xab, 0x3d, 0xd2, 0x53, 0xeb, 0xc3,
+	0x42, 0xd2, 0x17, 0x25, 0xa8, 0x06, 0x19, 0xe9, 0x7e, 0xc4, 0x16, 0x97, 0xc4, 0xb9, 0x7d, 0x38,
+	0xa3, 0xff, 0x5b, 0x7a, 0xd5, 0xc2, 0xaa, 0x07, 0x3d, 0x82, 0xf4, 0xb1, 0x6b, 0x9d, 0x8f, 0xa8,
+	0x7c, 0xfc, 0xde, 0xf0, 0xdc, 0x64, 0xe6, 0xa1, 0x08, 0x06, 0xb1, 0x80, 0xd6, 0xd6, 0x21, 0x1f,
+	0x7e, 0x38, 0x82, 0x1e, 0x40, 0x9e, 0x87, 0x91, 0xe2, 0x34, 0x8f, 0x5a, 0xbc, 0xa8, 0xa7, 0xf6,
+	0x1f, 0x1a, 0x64, 0xd5, 0x07, 0x02, 0xe8, 0x05, 0xcc, 0xaa, 0x62, 0xbd, 0x6f, 0xf6, 0xbd, 0x9e,
+	0xed, 0x74, 0xd4, 0x59, 0x1e, 0x73, 0xe0, 0xca, 0x52, 0xea, 0x50, 0x09, 0x71, 0x1e, 0x6a, 0x3a,
+	0x96, 0xdb, 0x8f, 0x78, 0x26, 0x3a, 0xb8, 0x65, 0x29, 0x15, 0xf2, 0xb4, 0x40, 0x77, 0x4f, 0x09,
+	0x35, 0x7b, 0xbd, 0x88, 0x28, 0x35, 0x09, 0xd1, 0xac, 0x12, 0x0b, 0x98, 0x6a, 0xff, 0xa2, 0x41,
+	0x79, 0xf8, 0xfb, 0x4d, 0xf4, 0x3d, 0xc8, 0x7a, 0x3c, 0x7c, 0xa0, 0xc1, 0xea, 0xc4, 0x2a, 0x3d,
+	0x38, 0xe8, 0x8a, 0x57, 0x40, 0xd2, 0xd7, 0xae, 0x80, 0x04, 0xfe, 0x66, 0x3a, 0xc9, 0xdf, 0xfc,
+	0x18, 0x32, 0x32, 0x87, 0xad, 0x0e, 0xd3, 0x4a, 0xd2, 0xcd, 0x50, 0xdd, 0x51, 0x05, 0x4e, 0xdc,
+	0x32, 0x95, 0x4c, 0xed, 0x9f, 0xf3, 0x90, 0x0f, 0xf3, 0x1d, 0xe8, 0x19, 0xcc, 0xf8, 0xcc, 0xec,
+	0x90, 0x6b, 0x98, 0xde, 0x0a, 0x60, 0x29, 0xc3, 0x0f, 0x9d, 0x65, 0xfb, 0x22, 0x72, 0x08, 0x6f,
+	0xb4, 0x18, 0x54, 0x13, 0xbf, 0xcd, 0xb6, 0x20, 0x2b, 0x17, 0x38, 0xf8, 0x60, 0xf7, 0x7b, 0x57,
+	0x66, 0x76, 0xea, 0x52, 0xc9, 0xe3, 0x5f, 0xfe, 0x2a, 0xf1, 0xea, 0x5f, 0xe4, 0x20, 0xa3, 0x8e,
+	0xc0, 0x2f, 0xa0, 0xac, 0x6e, 0x36, 0xf1, 0x1b, 0xf7, 0x65, 0x51, 0xe3, 0x08, 0x77, 0x5d, 0xaa,
+	0x7d, 0x94, 0x9f, 0x2d, 0xf9, 0xf1, 0x06, 0xf4, 0x15, 0xcc, 0x5b, 0xc4, 0x67, 0xb6, 0x23, 0x74,
+	0x3c, 0x1c, 0x41, 0x2a, 0xe1, 0xa7, 0x13, 0x8d, 0xf0, 0x3c, 0x92, 0x8f, 0x86, 0x41, 0xd6, 0x85,
+	0x56, 0xf4, 0x25, 0xcc, 0x8e, 0x06, 0x5c, 0xa9, 0x2b, 0x12, 0x75, 0xa3, 0xe3, 0x0c, 0x47, 0x5a,
+	0xdc, 0x2b, 0x0c, 0x97, 0xce, 0xf9, 0x42, 0x51, 0xd2, 0x77, 0x19, 0x31, 0x4c, 0xcb, 0xa2, 0xc4,
+	0xf7, 0x55, 0xe8, 0xbe, 0x3e, 0x21, 0x3d, 0x17, 0xdd, 0x90, 0x92, 0x7c, 0xa1, 0x68, 0xbc, 0x01,
+	0x61, 0x28, 0x74, 0x88, 0x43, 0xa8, 0xdd, 0x16, 0x7b, 0x2f, 0xbf, 0x48, 0x5b, 0x9b, 0x88, 0xf9,
+	0x73, 0x29, 0xf7, 0x92, 0xf0, 0xb8, 0x06, 0x3a, 0xe1, 0x13, 0x22, 0x80, 0xd4, 0xed, 0x5a, 0x54,
+	0x66, 0x55, 0x3e, 0x3a, 0x73, 0x45, 0x79, 0x6d, 0x94, 0x3a, 0x56, 0xf0, 0x17, 0x67, 0xaa, 0x35,
+	0x85, 0xf5, 0xee, 0x48, 0x5b, 0x75, 0x16, 0x4a, 0x43, 0x5a, 0x50, 0x5d, 0x00, 0x74, 0x71, 0xd3,
+	0xaa, 0x5f, 0x71, 0xd7, 0x3d, 0xb4, 0xa0, 0x13, 0xdf, 0xfe, 0x51, 0x1d, 0xca, 0x16, 0xf1, 0xdb,
+	0xd4, 0xf6, 0x98, 0x4b, 0x63, 0xe9, 0x9e, 0x10, 0x5c, 0x8a, 0xba, 0x5f, 0x92, 0x73, 0x3e, 0xa5,
+	0xa1, 0xf5, 0xae, 0xfe, 0x0c, 0x20, 0x5a, 0x26, 0xb4, 0x0e, 0x7a, 0x8c, 0x4e, 0x56, 0xb6, 0x47,
+	0x46, 0x9f, 0x8d, 0x00, 0xe2, 0x55, 0xab, 0xff, 0xa4, 0x81, 0x3e, 0xba, 0x1c, 0xef, 0x43, 0x84,
+	0x7e, 0x02, 0x45, 0x72, 0xe6, 0x91, 0x36, 0x53, 0xfb, 0x31, 0xfe, 0x92, 0x5f, 0x90, 0x78, 0x39,
+	0x64, 0x33, 0xb2, 0x83, 0xa9, 0x09, 0xed, 0x60, 0xdc, 0x00, 0x28, 0xd9, 0xc6, 0x12, 0xe8, 0xd2,
+	0x16, 0x8c, 0xdc, 0xc5, 0x6b, 0xff, 0x9a, 0x82, 0xd2, 0x90, 0xf4, 0xd5, 0xc1, 0xfa, 0x3d, 0x28,
+	0x90, 0x33, 0x33, 0x7c, 0x99, 0xb4, 0x8a, 0xa8, 0x40, 0x34, 0xca, 0x19, 0x7f, 0x04, 0x05, 0x51,
+	0xb9, 0x54, 0x90, 0x99, 0x84, 0x6a, 0x3e, 0xd0, 0xb0, 0x3c, 0x8f, 0x76, 0x40, 0x8f, 0x4a, 0xfa,
+	0x61, 0xb5, 0x72, 0xa2, 0xc2, 0xbe, 0x08, 0xe5, 0x82, 0x72, 0xbe, 0x64, 0x7b, 0x0a, 0x05, 0xf1,
+	0x9f, 0x3a, 0x86, 0x94, 0x7f, 0x31, 0x4e, 0xb4, 0xe5, 0xb0, 0x4f, 0x9e, 0x60, 0x8e, 0x11, 0x13,
+	0xe1, 0x3f, 0x82, 0x32, 0x4c, 0x49, 0x95, 0x77, 0x95, 0x70, 0x56, 0x05, 0x96, 0x45, 0xd5, 0x2c,
+	0x61, 0x1f, 0x42, 0x51, 0xc5, 0x6e, 0x12, 0x95, 0x1f, 0xad, 0x81, 0x15, 0x64, 0x77, 0x88, 0xf6,
+	0x07, 0x27, 0x11, 0x1a, 0x2e, 0xa0, 0x65, 0xb7, 0x44, 0xdf, 0x83, 0xa2, 0xed, 0x9c, 0x12, 0x1a,
+	0xcc, 0x20, 0x27, 0xe2, 0xb0, 0x82, 0x6c, 0x93, 0x9f, 0xf8, 0x56, 0x60, 0x51, 0x1d, 0x22, 0x01,
+	0x19, 0xca, 0x9d, 0x4c, 0xeb, 0x29, 0xf5, 0x75, 0xd8, 0x5f, 0x4f, 0xc3, 0x8d, 0xc4, 0xba, 0x3e,
+	0xba, 0x33, 0xb4, 0xbb, 0x3c, 0xfe, 0xa1, 0x7c, 0x87, 0x7e, 0x95, 0x53, 0x1b, 0x5c, 0x09, 0x3e,
+	0xfd, 0x48, 0x85, 0x09, 0x56, 0xd9, 0x80, 0x9e, 0x04, 0xdf, 0x67, 0xa4, 0x27, 0x29, 0x96, 0x06,
+	0x5f, 0x6c, 0x1c, 0x40, 0x71, 0xa8, 0x10, 0x2d, 0x2d, 0xdd, 0xf8, 0x42, 0xf4, 0xd0, 0x47, 0x1b,
+	0x05, 0x3f, 0x56, 0x89, 0xbe, 0xb0, 0x4f, 0x99, 0xa4, 0x7d, 0x6a, 0xdc, 0x83, 0xbb, 0x23, 0x5f,
+	0x41, 0x8c, 0xae, 0x58, 0xe3, 0x87, 0xb0, 0x62, 0xbb, 0x72, 0x26, 0x1e, 0x75, 0xcf, 0xce, 0x13,
+	0x4e, 0x56, 0x43, 0x7e, 0xd1, 0x72, 0xc0, 0xdf, 0xf1, 0x40, 0x3b, 0xce, 0x88, 0x97, 0x7d, 0xfc,
+	0x7f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x69, 0x6f, 0xd2, 0x14, 0xf2, 0x34, 0x00, 0x00,
 }

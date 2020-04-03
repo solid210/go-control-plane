@@ -17,7 +17,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 
-	core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
+	envoy_api_v2_core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 )
 
 // ensure the imports are used
@@ -34,9 +34,9 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = ptypes.DynamicAny{}
 
-	_ = core.RoutingPriority(0)
+	_ = envoy_api_v2_core.RoutingPriority(0)
 
-	_ = core.RequestMethod(0)
+	_ = envoy_api_v2_core.RequestMethod(0)
 )
 
 // define the regex for a UUID once up-front
@@ -432,6 +432,21 @@ func (m *Route) Validate() error {
 		}
 	}
 
+	for idx, item := range m.GetHttpPreClientFilters() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return RouteValidationError{
+					field:  fmt.Sprintf("HttpPreClientFilters[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	switch m.Action.(type) {
 
 	case *Route_Route:
@@ -534,6 +549,108 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RouteValidationError{}
+
+// Validate checks the field values on HttpPreClientFilter with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *HttpPreClientFilter) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if len(m.GetName()) < 1 {
+		return HttpPreClientFilterValidationError{
+			field:  "Name",
+			reason: "value length must be at least 1 bytes",
+		}
+	}
+
+	switch m.ConfigType.(type) {
+
+	case *HttpPreClientFilter_Config:
+
+		if v, ok := interface{}(m.GetConfig()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return HttpPreClientFilterValidationError{
+					field:  "Config",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *HttpPreClientFilter_TypedConfig:
+
+		if v, ok := interface{}(m.GetTypedConfig()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return HttpPreClientFilterValidationError{
+					field:  "TypedConfig",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// HttpPreClientFilterValidationError is the validation error returned by
+// HttpPreClientFilter.Validate if the designated constraints aren't met.
+type HttpPreClientFilterValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e HttpPreClientFilterValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e HttpPreClientFilterValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e HttpPreClientFilterValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e HttpPreClientFilterValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e HttpPreClientFilterValidationError) ErrorName() string {
+	return "HttpPreClientFilterValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e HttpPreClientFilterValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sHttpPreClientFilter.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = HttpPreClientFilterValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = HttpPreClientFilterValidationError{}
 
 // Validate checks the field values on WeightedCluster with the rules defined
 // in the proto definition for this message. If any rules are violated, an
@@ -1027,7 +1144,7 @@ func (m *RouteAction) Validate() error {
 		}
 	}
 
-	if _, ok := core.RoutingPriority_name[int32(m.GetPriority())]; !ok {
+	if _, ok := envoy_api_v2_core.RoutingPriority_name[int32(m.GetPriority())]; !ok {
 		return RouteActionValidationError{
 			field:  "Priority",
 			reason: "value must be one of the defined enum values",
