@@ -73,6 +73,21 @@ func (m *HttpConnectionManager) Validate() error {
 
 	}
 
+	for idx, item := range m.GetHttpPreSrvFilters() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return HttpConnectionManagerValidationError{
+					field:  fmt.Sprintf("HttpPreSrvFilters[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if v, ok := interface{}(m.GetAddUserAgent()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return HttpConnectionManagerValidationError{
@@ -896,6 +911,106 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = HttpFilterValidationError{}
+
+// Validate checks the field values on HttpPreSrvFilter with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *HttpPreSrvFilter) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if len(m.GetName()) < 1 {
+		return HttpPreSrvFilterValidationError{
+			field:  "Name",
+			reason: "value length must be at least 1 bytes",
+		}
+	}
+
+	switch m.ConfigType.(type) {
+
+	case *HttpPreSrvFilter_Config:
+
+		if v, ok := interface{}(m.GetConfig()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return HttpPreSrvFilterValidationError{
+					field:  "Config",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *HttpPreSrvFilter_TypedConfig:
+
+		if v, ok := interface{}(m.GetTypedConfig()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return HttpPreSrvFilterValidationError{
+					field:  "TypedConfig",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// HttpPreSrvFilterValidationError is the validation error returned by
+// HttpPreSrvFilter.Validate if the designated constraints aren't met.
+type HttpPreSrvFilterValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e HttpPreSrvFilterValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e HttpPreSrvFilterValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e HttpPreSrvFilterValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e HttpPreSrvFilterValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e HttpPreSrvFilterValidationError) ErrorName() string { return "HttpPreSrvFilterValidationError" }
+
+// Error satisfies the builtin error interface
+func (e HttpPreSrvFilterValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sHttpPreSrvFilter.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = HttpPreSrvFilterValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = HttpPreSrvFilterValidationError{}
 
 // Validate checks the field values on HttpConnectionManager_Tracing with the
 // rules defined in the proto definition for this message. If any rules are
